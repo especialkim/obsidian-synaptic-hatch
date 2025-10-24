@@ -6,11 +6,11 @@ import {
 	focusWindowById,
 	blurCurrentWindow,
 	blurWindowById,
+	getBrowserWindowById,
 } from '../electron';
 import type AlwaysOnTopPlugin from '../../main';
 import type { IndicatorManager } from '../indicator-manager';
 import { markPopupDocument } from './document-marker';
-import { handlePopoutClose } from './popout-close-handler';
 
 export interface PendingPopupInfo {
 	existingWindowIds: Set<number>;
@@ -19,14 +19,18 @@ export interface PendingPopupInfo {
 	mainWindowId: number;
 }
 
+export interface ActivePopupInfo {
+	windowId: number;
+	doc: Document;
+	shouldMaintainBackground: boolean;
+	restoreFocus: boolean;
+	mainWindowId: number;
+}
+
 export interface PopoutLifecycleState {
 	pendingPopupInfo: PendingPopupInfo | null;
 	pendingPopupFinalizeTimeout: number | null;
-	activePopupWindowId: number | null;
-	activePopupDoc: Document | null;
-	activePopupShouldMaintainBackground: boolean;
-	activePopupRestoreFocus: boolean;
-	activePopupMainWindowId: number | null;
+	activePopups: Map<number, ActivePopupInfo>;
 }
 
 const FINALIZE_MAX_ATTEMPTS = 10;
@@ -36,78 +40,51 @@ export class PopoutManager {
 	private readonly state: PopoutLifecycleState = {
 		pendingPopupInfo: null,
 		pendingPopupFinalizeTimeout: null,
-		activePopupWindowId: null,
-		activePopupDoc: null,
-		activePopupShouldMaintainBackground: false,
-		activePopupRestoreFocus: false,
-		activePopupMainWindowId: null,
+		activePopups: new Map(),
 	};
+	private mainWindowId: number | null = null;
 
 	constructor(
 		private readonly plugin: AlwaysOnTopPlugin,
 		private readonly indicators: IndicatorManager,
-	) {}
+	) {
+		// 초기화 시 메인창 ID 저장
+		const mainWindow = getCurrentBrowserWindow();
+		if (mainWindow) {
+			this.mainWindowId = mainWindow.id;
+		}
+	}
 
 	openPopout(forceBackground: boolean = false): void {
-		console.log('[AOT Popout] openPopout called, forceBackground:', forceBackground);
 		
 		if (this.state.pendingPopupInfo) {
-			console.log('[AOT Popout] Already pending popup, ignoring');
 			return;
 		}
 
-		if (this.state.activePopupWindowId) {
-			console.log('[AOT Popout] Reactivating existing popup:', this.state.activePopupWindowId);
-			
-			const currentWindow = getCurrentBrowserWindow();
-			const windowIsFocused = currentWindow && typeof currentWindow.isFocused === 'function' ? currentWindow.isFocused() : document.hasFocus();
-			console.log('[AOT Popout] Main window is currently focused (reactivate):', windowIsFocused);
-			
-			this.state.activePopupShouldMaintainBackground = forceBackground || !windowIsFocused;
-			this.state.activePopupRestoreFocus = !forceBackground && windowIsFocused;
-			
-			if (forceBackground || !windowIsFocused) {
-				blurCurrentWindow();
-				console.log('[AOT Popout] Main window blurred for reactivation');
-			} else {
-				console.log('[AOT Popout] Main window kept focused for reactivation');
-			}
-			
-			setWindowAlwaysOnTopById(this.state.activePopupWindowId, true, 'floating');
-			focusWindowById(this.state.activePopupWindowId);
-			
-			return;
-		}
-
-		const currentWindow = getCurrentBrowserWindow();
-		if (!currentWindow) {
+		const mainWindowIdToUse = this.mainWindowId;
+		if (!mainWindowIdToUse) {
 			new Notice('Unable to control windows on this platform.');
 			return;
 		}
 
-		console.log('[AOT Popout] Creating new popup, main window ID:', currentWindow.id);
-		
-		const windowIsFocused = typeof currentWindow.isFocused === 'function' ? currentWindow.isFocused() : document.hasFocus();
-		console.log('[AOT Popout] Main window is currently focused:', windowIsFocused);
+		const mainWindow = getBrowserWindowById(mainWindowIdToUse);
+		const windowIsFocused = mainWindow && typeof mainWindow.isFocused === 'function' ? mainWindow.isFocused() : document.hasFocus();
 		
 		const shouldMaintainBackground = forceBackground || !windowIsFocused;
 		const shouldRestoreFocus = !forceBackground && windowIsFocused;
 
 		const existingWindowIds = new Set(getBrowserWindowIds());
-		existingWindowIds.add(currentWindow.id);
 
 		this.state.pendingPopupInfo = {
 			existingWindowIds,
 			shouldMaintainBackground,
 			restoreFocus: shouldRestoreFocus,
-			mainWindowId: currentWindow.id,
+			mainWindowId: mainWindowIdToUse,
 		};
 
 		if (shouldMaintainBackground) {
 			blurCurrentWindow();
-			console.log('[AOT Popout] Main window blurred (forceBackground:', forceBackground, ', focused:', windowIsFocused, ')');
 		} else {
-			console.log('[AOT Popout] Main window kept focused (focused:', windowIsFocused, ')');
 		}
 
 		/* Blank Tab 으로 열기 */
@@ -133,117 +110,111 @@ export class PopoutManager {
 	}
 
 	handleWindowClosed(doc: Document): void {
-		console.log('[AOT Popout] handleWindowClosed called');
+		let closingPopupInfo: ActivePopupInfo | null = null;
+		for (const [windowId, info] of this.state.activePopups.entries()) {
+			if (info.doc === doc) {
+				closingPopupInfo = info;
+				break;
+			}
+		}
 		
-		handlePopoutClose(this.state, doc, {
-			onCleanup: () => {
-				console.log('[AOT Popout] Cleanup callback');
-				this.clearPendingPopupTimeout();
-				this.state.activePopupDoc = null;
-				this.state.pendingPopupInfo = null;
-			},
-			onResetState: () => {
-				console.log('[AOT Popout] Reset state callback');
-				this.state.activePopupShouldMaintainBackground = false;
-				this.state.activePopupRestoreFocus = false;
-				this.state.activePopupMainWindowId = null;
-			},
-			onUnsetActiveWindow: () => {
-				console.log('[AOT Popout] Unset active window callback');
-				this.state.activePopupWindowId = null;
-			},
-			onMaintainBackground: (mainWindowId: number) => {
-				console.log('[AOT Popout] Maintain background - blurring main window ID:', mainWindowId);
-				// Blur immediately and at multiple intervals to prevent Obsidian from focusing main window
-				blurWindowById(mainWindowId);
-				window.setTimeout(() => {
-					console.log('[AOT Popout] Blur attempt 1 (10ms)');
-					blurWindowById(mainWindowId);
-				}, 10);
-				window.setTimeout(() => {
-					console.log('[AOT Popout] Blur attempt 2 (30ms)');
-					blurWindowById(mainWindowId);
-				}, 30);
-				window.setTimeout(() => {
-					console.log('[AOT Popout] Blur attempt 3 (50ms)');
-					blurWindowById(mainWindowId);
-				}, 50);
-				window.setTimeout(() => {
-					console.log('[AOT Popout] Blur attempt 4 (100ms)');
-					blurWindowById(mainWindowId);
-				}, 100);
-			},
-			onRestoreFocus: (windowId) => {
-				console.log('[AOT Popout] Restore focus to window:', windowId);
-				window.setTimeout(() => {
-					focusWindowById(windowId);
-				}, 50);
-			},
-		});
+		if (!closingPopupInfo) {
+			return;
+		}
+		
+		// 팝업 제거
+		this.state.activePopups.delete(closingPopupInfo.windowId);
+		
+		// Always-on-top 해제
+		setWindowAlwaysOnTopById(closingPopupInfo.windowId, false, 'floating');
+		
+		// 다른 팝업이 남아있는지 확인
+		const hasRemainingPopups = this.state.activePopups.size > 0;
+
+		const mainWindowId = closingPopupInfo.mainWindowId;
+		
+		if (hasRemainingPopups) {
+			blurWindowById(mainWindowId);
+			window.setTimeout(() => blurWindowById(mainWindowId), 20);
+			window.setTimeout(() => blurWindowById(mainWindowId), 100);
+			return;
+		}
+		
+		// 마지막 팝업이 닫힌 경우
+		const mainWindow = getBrowserWindowById(mainWindowId);
+		const isMainWindowCurrentlyFocused = mainWindow && typeof mainWindow.isFocused === 'function' ? mainWindow.isFocused() : false;
+		
+		if (isMainWindowCurrentlyFocused) {
+			return;
+		}
+		
+		blurWindowById(mainWindowId);
+		window.setTimeout(() => blurWindowById(mainWindowId), 20);
+		window.setTimeout(() => blurWindowById(mainWindowId), 100);
 	}
 
 	dispose(): void {
 		this.clearPendingPopupTimeout();
+		this.state.activePopups.clear();
 	}
 
 	getActivePopupWindowId(): number | null {
-		return this.state.activePopupWindowId;
+		// 첫 번째 활성 팝업 반환 (호환성 유지용)
+		const firstPopup = this.state.activePopups.values().next().value;
+		return firstPopup ? firstPopup.windowId : null;
+	}
+
+	getActivePopupCount(): number {
+		return this.state.activePopups.size;
 	}
 
 	isMaintainingBackground(): boolean {
-		return this.state.activePopupShouldMaintainBackground;
-	}
-
-	setMaintainBackground(value: boolean): void {
-		this.state.activePopupShouldMaintainBackground = value;
-	}
-
-	setRestoreFocus(value: boolean): void {
-		this.state.activePopupRestoreFocus = value;
+		// 모든 팝업이 background 유지 중인지 확인
+		for (const popup of this.state.activePopups.values()) {
+			if (popup.shouldMaintainBackground) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private finalizePendingPopout(doc: Document, attempt = 0): void {
 		if (!this.state.pendingPopupInfo) {
-			console.log('[AOT Popout] finalizePendingPopout: no pending info');
 			return;
 		}
 
 		const newWindowId = this.findNewBrowserWindowId(this.state.pendingPopupInfo.existingWindowIds);
 		if (!newWindowId) {
 			if (attempt >= FINALIZE_MAX_ATTEMPTS) {
-				console.log('[AOT Popout] finalizePendingPopout: max attempts reached, giving up');
 				this.state.pendingPopupInfo = null;
 				this.state.pendingPopupFinalizeTimeout = null;
 				return;
 			}
 
-			console.log('[AOT Popout] finalizePendingPopout: window not found yet, retrying...', attempt);
 			this.state.pendingPopupFinalizeTimeout = window.setTimeout(() => {
 				this.finalizePendingPopout(doc, attempt + 1);
 			}, FINALIZE_RETRY_DELAY);
 			return;
 		}
 
-		console.log('[AOT Popout] finalizePendingPopout: Found new popup window ID:', newWindowId);
 		
-		const { shouldMaintainBackground, restoreFocus, mainWindowId } = this.state.pendingPopupInfo;
-		console.log('[AOT Popout] finalizePendingPopout: State:', { 
-			shouldMaintainBackground, 
-			restoreFocus, 
-			mainWindowId 
-		});
+		const { shouldMaintainBackground, restoreFocus, mainWindowId } = this.state.pendingPopupInfo;															
+
+		// 새로운 팝업 정보를 Map에 저장
+		const popupInfo: ActivePopupInfo = {
+			windowId: newWindowId,
+			doc: doc,
+			shouldMaintainBackground,
+			restoreFocus,
+			mainWindowId,
+		};
+		this.state.activePopups.set(newWindowId, popupInfo);
 		
 		this.state.pendingPopupInfo = null;
 		this.state.pendingPopupFinalizeTimeout = null;
-		this.state.activePopupWindowId = newWindowId;
-		this.state.activePopupDoc = doc;
-		this.state.activePopupShouldMaintainBackground = shouldMaintainBackground;
-		this.state.activePopupRestoreFocus = restoreFocus;
-		this.state.activePopupMainWindowId = mainWindowId;
 
 		markPopupDocument(doc, newWindowId);
 
-		console.log('[AOT Popout] Setting popup always on top and focusing');
 		setWindowAlwaysOnTopById(newWindowId, true, 'floating');
 		focusWindowById(newWindowId);
 		

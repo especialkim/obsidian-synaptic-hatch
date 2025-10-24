@@ -187,6 +187,7 @@ export class IndicatorManager {
 		const offsets = this.getIndicatorOffsets(doc);
 		indicator.style.top = `${offsets.top}px`;
 		indicator.style.right = `${offsets.right}px`;
+		this.applyIndicatorStyle(indicator, doc);
 	}
 
 	private getIndicatorOffsets(doc: Document) {
@@ -202,5 +203,29 @@ export class IndicatorManager {
 			top: this.plugin.settings.popoutIndicatorOffsetTop,
 			right: this.plugin.settings.popoutIndicatorOffsetRight,
 		};
+	}
+
+	private applyIndicatorStyle(indicator: HTMLElement, doc: Document): void {
+		const isMainWindow = doc === document;
+		
+		if (isMainWindow) {
+			indicator.style.width = `${this.plugin.settings.mainIndicatorSize}px`;
+			indicator.style.height = `${this.plugin.settings.mainIndicatorSize}px`;
+			
+			const svg = indicator.querySelector('svg');
+			if (svg) {
+				svg.style.width = `${this.plugin.settings.mainIndicatorIconSize}px`;
+				svg.style.height = `${this.plugin.settings.mainIndicatorIconSize}px`;
+			}
+		} else {
+			indicator.style.width = `${this.plugin.settings.popoutIndicatorSize}px`;
+			indicator.style.height = `${this.plugin.settings.popoutIndicatorSize}px`;
+			
+			const svg = indicator.querySelector('svg');
+			if (svg) {
+				svg.style.width = `${this.plugin.settings.popoutIndicatorIconSize}px`;
+				svg.style.height = `${this.plugin.settings.popoutIndicatorIconSize}px`;
+			}
+		}
 	}
 }

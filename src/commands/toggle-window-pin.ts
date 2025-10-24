@@ -4,7 +4,6 @@ import type { IndicatorManager } from '../indicator-manager';
 import type AlwaysOnTopPlugin from '../../main';
 
 function showToggleNotice(result: AlwaysOnTopResult) {
-	console.log('[AOT Toggle] showToggleNotice called, result:', result);
 	switch (result) {
 		case 'applied':
 			new Notice('Window pinned on top');
@@ -28,24 +27,16 @@ function shouldShowNotice(plugin: AlwaysOnTopPlugin, doc: Document | null): bool
 		? plugin.settings.showIndicatorInMainWindow 
 		: plugin.settings.showIndicatorInPopoutWindows;
 	
-	console.log('[AOT Toggle] shouldShowNotice check:', {
-		isMainWindow,
-		hasIndicator,
-		shouldShow: !hasIndicator
-	});
-	
 	// 인디케이터가 보이면 notice 안 보여줌
 	return !hasIndicator;
 }
 
 export function executeToggleWindowPin(plugin: AlwaysOnTopPlugin, indicators: IndicatorManager) {
-	console.log('[AOT Toggle] executeToggleWindowPin called');
 	const result = toggleAlwaysOnTop();
 	
 	const focusedDoc = indicators.getFocusedDocument();
 	if (focusedDoc) {
 		const isPinned = result === 'applied' || result === 'already';
-		console.log('[AOT Toggle] Setting window pinned state:', isPinned);
 		indicators.setWindowPinned(focusedDoc, isPinned);
 	}
 
@@ -55,7 +46,6 @@ export function executeToggleWindowPin(plugin: AlwaysOnTopPlugin, indicators: In
 	if (shouldShowNotice(plugin, focusedDoc)) {
 		showToggleNotice(result);
 	} else {
-		console.log('[AOT Toggle] Skipping notice (indicator is visible)');
 	}
 }
 

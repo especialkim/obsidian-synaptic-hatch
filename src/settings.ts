@@ -7,6 +7,10 @@ export interface AlwaysOnTopSettings {
 	mainIndicatorOffsetRight: number;
 	popoutIndicatorOffsetTop: number;
 	popoutIndicatorOffsetRight: number;
+	mainIndicatorSize: number;
+	mainIndicatorIconSize: number;
+	popoutIndicatorSize: number;
+	popoutIndicatorIconSize: number;
 }
 
 export const DEFAULT_SETTINGS: AlwaysOnTopSettings = {
@@ -16,6 +20,10 @@ export const DEFAULT_SETTINGS: AlwaysOnTopSettings = {
 	mainIndicatorOffsetRight: 12,
 	popoutIndicatorOffsetTop: 80,
 	popoutIndicatorOffsetRight: 12,
+	mainIndicatorSize: 30,
+	mainIndicatorIconSize: 15,
+	popoutIndicatorSize: 30,
+	popoutIndicatorIconSize: 15,
 };
 
 export async function loadPluginSettings(plugin: Plugin): Promise<AlwaysOnTopSettings> {

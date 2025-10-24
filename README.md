@@ -1,69 +1,55 @@
-# Obsidian Always On Top
+# Snaptic Hatch
 
-Pin Obsidian windows so they stay on top of other applications. Works with both main window and pop-out windows.
+Snaptic Hatch(커뮤니티 목록에서는 **Synaptic Hatch**로 표시됨)는 Obsidian 데스크톱 창을 자유롭게 고정(Always-on-Top)하고, 언제든지 꺼내 쓰는 팝아웃 노트를 제공하는 플러그인입니다. 메인 앱 위를 가리지 않고 빠르게 메모하거나, 외부 앱을 사용하면서도 Obsidian 노트를 항상 곁에 둘 수 있습니다.
 
-## Features
+## 핵심 기능
+- **창 고정 토글**: 현재 활성화된 Obsidian 창을 항상 위/해제 상태로 전환합니다.
+- **팝아웃 노트**: 현재 열어둔 노트를 별도 창으로 띄우고 자동으로 Always-on-Top으로 유지합니다.
+- **퀵 메모 모드**: 메인 창을 자동으로 뒤로 보내고, 메모 창만 위에 남겨 외부 앱 사용 중에도 메모가 가능합니다.
+- **핀 표시기**: 창 오른쪽 상단에 고정 상태를 알려주는 아이콘을 표시합니다(위치 조정 가능).
 
-- 📌 **Toggle always-on-top** for any Obsidian window (main or pop-out)
-- 🎯 **Visual indicator** in the top-right corner showing pin status
-- ⌨️ **Keyboard command** to quickly toggle pin state
-- 🖱️ **Click the pin icon** to toggle without using commands
+## 사용 방법
+- `Toggle Window Pin for Always on Top`  
+  커맨드 팔레트 또는 단축키로 실행하면 현재 창의 고정 상태를 전환합니다. 표시기가 활성화되어 있다면 색상으로 고정 여부를 바로 확인할 수 있습니다.
 
-## Installation
+- `Open Always-On-Top Popout`  
+  지금 보고 있는 노트를 팝아웃 창으로 열고 즉시 Always-on-Top으로 고정합니다. 주로 두 번째 화면이나 참고용 창이 필요할 때 활용하세요.
 
-### From Obsidian Community Plugins (Coming Soon)
-1. Open **Settings → Community plugins**
-2. Search for "Always On Top"
-3. Click **Install** and then **Enable**
+- `Open Always-On-Top Popout For Quick Note`  
+  메인 Obsidian 창을 자동으로 배경으로 보내고, 팝아웃 창만 전면에 두는 퀵 메모 모드입니다. 외부 앱을 쓰면서 빠르게 필기할 때 유용합니다.
 
-### Manual Installation
-1. Clone or download this repository to `<Vault>/.obsidian/plugins/obsidian-always-on-top`
-2. Run `npm install` to install dependencies
-3. Run `npm run build` to compile the plugin
-4. Reload Obsidian and enable the plugin in **Settings → Community plugins**
+### 외부에서 퀵 메모 불러오기
+이 플러그인은 Obsidian URI 핸들러를 등록합니다.
 
-## Usage
-
-### Method 1: Pin Indicator (Recommended)
-- Look for the **pin icon** in the top-right corner of any window
-- Click the icon to toggle always-on-top
-- Icon will be **highlighted** when the window is pinned
-
-### Method 2: Command Palette
-- Press `Cmd+P` (macOS) or `Ctrl+P` (Windows/Linux)
-- Search for "Toggle window always on top"
-- Press Enter to toggle
-
-### Works with:
-- Main Obsidian window
-- Pop-out windows (right-click tab → "Move to new window")
-- Multiple windows independently
-
-## Development
-
-```bash
-# Install dependencies
-npm install
-
-# Build for production
-npm run build
-
-# Development mode with auto-rebuild
-npm run dev
+```
+obsidian://aot-popup
 ```
 
-## Technical Details
+위 URI를 실행하면 `Open Always-On-Top Popout For Quick Note`와 동일하게 퀵 메모 창이 즉시 열립니다. 운영체제의 단축키 런처, Alfred, Raycast, AutoHotkey 등과 연결하면 Obsidian을 열지 않고도 바로 메모 창을 호출할 수 있습니다.
 
-- Uses Electron's `BrowserWindow` API
-- Desktop-only (requires Electron)
-- Automatically detects the focused window
-- No configuration needed
+## 설정
+- **메인 창 핀 표시기**  
+  표시 여부와 상하/좌우 오프셋(px)을 지정하여 원하는 위치에 배치할 수 있습니다. 기본값은 고정 상태일 때만 표시합니다.
+- **팝아웃 창 핀 표시기**  
+  표시 여부와 위치를 개별적으로 조정할 수 있습니다. 팝아웃 창에서는 기본적으로 항상 표시됩니다(고정 시 강조 색상).
 
-## Limitations
+설정 변경 후에는 표시기가 자동으로 새 위치와 상태로 갱신됩니다.
 
-- **Desktop only** - does not work on mobile (no Electron API available)
-- Requires Obsidian to have access to Electron remote module
+## 설치 & 업데이트
+1. **커뮤니티 플러그인 설치**  
+   - Obsidian에서 **Settings → Community plugins**로 이동하여 안전 모드를 해제합니다.  
+   - **Browse**에서 `Synaptic Hatch`를 검색해 설치 후 활성화합니다.
+2. **수동 설치(개발 버전)**  
+   - 저장소를 내려받아 `npm install && npm run build`를 실행합니다.  
+   - 생성된 `main.js`, `manifest.json`, `styles.css` 파일을 `<Vault>/.obsidian/plugins/synaptic-hatch/`에 복사합니다.  
+   - Obsidian을 재시작하거나 플러그인을 다시 로드합니다.
 
-## License
+## 호환성 및 주의 사항
+- 이 플러그인은 Electron 창 제어 API를 사용하므로 **데스크톱 버전에서만 동작**합니다. (manifest.json의 `isDesktopOnly: true`)
+- 운영체제별로 Always-on-Top 제어 권한이 제한된 환경에서는 창 제어가 실패할 수 있습니다.
+- 메인 창을 강제로 배경으로 보내는 기능은 OS에 따라 일시적으로 포커스를 되돌릴 수도 있습니다. 문제가 발생하면 퀵 메모 커맨드를 일반 팝아웃 커맨드로 대체해 사용하세요.
 
-MIT
+## 팁
+- 자주 쓰는 커맨드에는 **Settings → Hotkeys**에서 단축키를 지정하세요.
+- 퀵 메모 URI는 시스템 전역 단축키와 연동해 두면, 다른 앱을 사용하다가도 즉시 메모 창을 불러올 수 있습니다.
+- 팝아웃 창을 닫으면 자동으로 Always-on-Top 상태가 해제되고, 필요한 경우 메인 창 포커스를 복원합니다.

@@ -45,3 +45,8 @@
 .always-on-top-indicator--popout {
 	/* Hook for pop-out window specific styling */
 }
+
+.always-on-top-setting-input {
+	width: 3rem;
+	text-align: right;
+}
