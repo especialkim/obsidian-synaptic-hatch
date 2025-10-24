@@ -1,8 +1,8 @@
 /* Always On Top Pin Indicator */
 .always-on-top-indicator {
 	position: fixed;
-	top: calc(var(--header-height) * 2 + 6px);
-	right: 10px;
+	top: 60px;
+	right: 12px;
 	z-index: 9999;
 	width: 30px;
 	height: 30px;
@@ -36,4 +36,12 @@
 .always-on-top-indicator svg {
 	width: 15px;
 	height: 15px;
+}
+
+.always-on-top-indicator--main {
+	/* Hook for main window specific styling */
+}
+
+.always-on-top-indicator--popout {
+	/* Hook for pop-out window specific styling */
 }

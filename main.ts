@@ -4,11 +4,19 @@ import { toggleAlwaysOnTop, isWindowPinned, AlwaysOnTopResult } from './src/elec
 interface AlwaysOnTopSettings {
 	showIndicatorInMainWindow: boolean;
 	showIndicatorInPopoutWindows: boolean;
+	mainIndicatorOffsetTop: number;
+	mainIndicatorOffsetRight: number;
+	popoutIndicatorOffsetTop: number;
+	popoutIndicatorOffsetRight: number;
 }
 
 const DEFAULT_SETTINGS: AlwaysOnTopSettings = {
 	showIndicatorInMainWindow: false,
-	showIndicatorInPopoutWindows: true
+	showIndicatorInPopoutWindows: true,
+	mainIndicatorOffsetTop: 60,
+	mainIndicatorOffsetRight: 12,
+	popoutIndicatorOffsetTop: 16,
+	popoutIndicatorOffsetRight: 12
 };
 
 export default class AlwaysOnTopPlugin extends Plugin {
@@ -108,6 +116,27 @@ export default class AlwaysOnTopPlugin extends Plugin {
 		return null;
 	}
 
+	private getIndicatorOffsets(doc: Document) {
+		const isMainWindow = doc === document;
+		if (isMainWindow) {
+			return {
+				top: this.settings.mainIndicatorOffsetTop,
+				right: this.settings.mainIndicatorOffsetRight
+			};
+		}
+
+		return {
+			top: this.settings.popoutIndicatorOffsetTop,
+			right: this.settings.popoutIndicatorOffsetRight
+		};
+	}
+
+	private applyIndicatorPosition(indicator: HTMLElement, doc: Document) {
+		const offsets = this.getIndicatorOffsets(doc);
+		indicator.style.top = `${offsets.top}px`;
+		indicator.style.right = `${offsets.right}px`;
+	}
+
 	private addPinIndicatorToAllWindows() {
 		// Add to main window
 		this.addPinIndicatorToWindow(document);
@@ -154,6 +183,7 @@ export default class AlwaysOnTopPlugin extends Plugin {
 
 		// Create pin indicator button in the top-right corner
 		const indicator = doc.body.createDiv('always-on-top-indicator');
+		indicator.addClass(isMainWindow ? 'always-on-top-indicator--main' : 'always-on-top-indicator--popout');
 		indicator.setAttribute('aria-label', 'Toggle always on top');
 		
 		// Add icon
@@ -178,6 +208,9 @@ export default class AlwaysOnTopPlugin extends Plugin {
 
 		// Store the indicator
 		this.pinIndicators.set(doc, indicator);
+
+		// Apply initial position
+		this.applyIndicatorPosition(indicator, doc);
 
 		// Update its state
 		this.updateIndicatorForWindow(doc);
@@ -236,6 +269,8 @@ export default class AlwaysOnTopPlugin extends Plugin {
 		const indicator = this.pinIndicators.get(doc);
 		if (!indicator) return;
 
+		this.applyIndicatorPosition(indicator, doc);
+
 		if (isPinned) {
 			indicator.addClass('is-pinned');
 		} else {
@@ -271,6 +306,40 @@ class AlwaysOnTopSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
+		const createOffsetSetting = (
+			parent: HTMLElement,
+			options: {
+				name: string;
+				desc: string;
+				getValue: () => number;
+				onChange: (value: number) => Promise<void>;
+			}
+		) => {
+			new Setting(parent)
+				.setName(options.name)
+				.setDesc(options.desc)
+				.addText((text) => {
+					text.inputEl.type = 'number';
+					text.inputEl.min = '0';
+					text.inputEl.step = '1';
+					text.setValue(String(options.getValue()));
+					text.onChange(async (raw) => {
+						if (raw.trim() === '') {
+							return;
+						}
+
+						const parsed = Number(raw);
+						if (!Number.isFinite(parsed)) {
+							return;
+						}
+
+						const sanitizedValue = Math.max(0, Math.round(parsed));
+						await options.onChange(sanitizedValue);
+						text.setValue(String(options.getValue()));
+					});
+				});
+		};
+
 		// Main Window section
 		containerEl.createEl('h3', { text: 'Main Window' });
 		
@@ -289,6 +358,26 @@ class AlwaysOnTopSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}));
 
+		createOffsetSetting(containerEl, {
+			name: 'Top offset (px)',
+			desc: 'Distance from the top edge of the main window.',
+			getValue: () => this.plugin.settings.mainIndicatorOffsetTop,
+			onChange: async (value) => {
+				this.plugin.settings.mainIndicatorOffsetTop = value;
+				await this.plugin.saveSettings();
+			}
+		});
+
+		createOffsetSetting(containerEl, {
+			name: 'Right offset (px)',
+			desc: 'Distance from the right edge of the main window.',
+			getValue: () => this.plugin.settings.mainIndicatorOffsetRight,
+			onChange: async (value) => {
+				this.plugin.settings.mainIndicatorOffsetRight = value;
+				await this.plugin.saveSettings();
+			}
+		});
+
 		// Pop-out Windows section
 		containerEl.createEl('h3', { text: 'Pop-out Windows' });
 		
@@ -306,5 +395,25 @@ class AlwaysOnTopSettingTab extends PluginSettingTab {
 					this.plugin.settings.showIndicatorInPopoutWindows = value;
 					await this.plugin.saveSettings();
 				}));
+
+		createOffsetSetting(containerEl, {
+			name: 'Top offset (px)',
+			desc: 'Distance from the top edge of pop-out windows.',
+			getValue: () => this.plugin.settings.popoutIndicatorOffsetTop,
+			onChange: async (value) => {
+				this.plugin.settings.popoutIndicatorOffsetTop = value;
+				await this.plugin.saveSettings();
+			}
+		});
+
+		createOffsetSetting(containerEl, {
+			name: 'Right offset (px)',
+			desc: 'Distance from the right edge of pop-out windows.',
+			getValue: () => this.plugin.settings.popoutIndicatorOffsetRight,
+			onChange: async (value) => {
+				this.plugin.settings.popoutIndicatorOffsetRight = value;
+				await this.plugin.saveSettings();
+			}
+		});
 	}
 }
