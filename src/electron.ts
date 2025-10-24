@@ -3,6 +3,8 @@ interface ElectronBrowserWindow {
 	isAlwaysOnTop(): boolean;
 	focus(): void;
 	isFocused(): boolean;
+	blur?: () => void;
+	setSkipTaskbar?: (skip: boolean) => void;
 	id: number;
 }
 
@@ -11,6 +13,7 @@ interface ElectronRemoteModule {
 	BrowserWindow?: {
 		getFocusedWindow(): ElectronBrowserWindow | null;
 		getAllWindows(): ElectronBrowserWindow[];
+		fromId?(id: number): ElectronBrowserWindow | null;
 	};
 }
 
@@ -48,40 +51,7 @@ function resolveRemoteModule(moduleExport: unknown): ElectronRemoteModule | null
 }
 
 export function getCurrentBrowserWindow(): ElectronBrowserWindow | null {
-	let remoteModule: ElectronRemoteModule | null = null;
-
-	// First try: window.electron.remote (direct access)
-	const globalWindow = window as Window & {
-		electron?: {
-			remote?: ElectronRemoteModule;
-		};
-	};
-	
-	if (globalWindow.electron?.remote) {
-		remoteModule = globalWindow.electron.remote;
-	}
-
-	// Second try: require('@electron/remote') or require('electron')
-	if (!remoteModule) {
-		const electronRequire = getElectronRequire();
-		if (!electronRequire) {
-			return null;
-		}
-
-		for (const moduleId of MODULE_IDS) {
-			try {
-				const moduleExport = electronRequire(moduleId);
-				const resolved = resolveRemoteModule(moduleExport);
-				if (resolved) {
-					remoteModule = resolved;
-					break;
-				}
-			} catch (error) {
-				// Silently continue to next module
-			}
-		}
-	}
-
+	const remoteModule = getElectronRemoteModule();
 	if (!remoteModule) {
 		return null;
 	}
@@ -126,6 +96,109 @@ export function getCurrentBrowserWindow(): ElectronBrowserWindow | null {
 	}
 
 	return null;
+}
+
+function getElectronRemoteModule(): ElectronRemoteModule | null {
+	const globalWindow = window as Window & {
+		electron?: {
+			remote?: ElectronRemoteModule;
+		};
+	};
+	
+	if (globalWindow.electron?.remote) {
+		return globalWindow.electron.remote;
+	}
+
+	const electronRequire = getElectronRequire();
+	if (!electronRequire) {
+		return null;
+	}
+
+	for (const moduleId of MODULE_IDS) {
+		try {
+			const moduleExport = electronRequire(moduleId);
+			const resolved = resolveRemoteModule(moduleExport);
+			if (resolved) {
+				return resolved;
+			}
+		} catch (error) {
+			// Continue to next module
+		}
+	}
+
+	return null;
+}
+
+export function getAllBrowserWindows(): ElectronBrowserWindow[] {
+	const remoteModule = getElectronRemoteModule();
+	if (!remoteModule?.BrowserWindow?.getAllWindows) {
+		return [];
+	}
+
+	try {
+		return remoteModule.BrowserWindow.getAllWindows();
+	} catch (error) {
+		return [];
+	}
+}
+
+export function getBrowserWindowIds(): number[] {
+	return getAllBrowserWindows().map((win) => win.id);
+}
+
+export function getBrowserWindowById(id: number): ElectronBrowserWindow | null {
+	const remoteModule = getElectronRemoteModule();
+	if (!remoteModule?.BrowserWindow?.fromId) {
+		return null;
+	}
+
+	try {
+		return remoteModule.BrowserWindow.fromId(id) ?? null;
+	} catch (error) {
+		return null;
+	}
+}
+
+export function setWindowAlwaysOnTopById(id: number, flag: boolean, level: string = 'floating'): boolean {
+	const win = getBrowserWindowById(id);
+	if (!win) {
+		return false;
+	}
+
+	try {
+		win.setAlwaysOnTop(flag, level);
+		return true;
+	} catch (error) {
+		return false;
+	}
+}
+
+export function focusWindowById(id: number): boolean {
+	const win = getBrowserWindowById(id);
+	if (!win) {
+		return false;
+	}
+
+	try {
+		win.focus();
+		return true;
+	} catch (error) {
+		return false;
+	}
+}
+
+export function blurCurrentWindow(): boolean {
+	const win = getCurrentBrowserWindow();
+	if (!win || !win.blur) {
+		return false;
+	}
+
+	try {
+		win.blur();
+		return true;
+	} catch (error) {
+		return false;
+	}
 }
 
 export type AlwaysOnTopResult = 'applied' | 'already' | 'removed' | 'unavailable';

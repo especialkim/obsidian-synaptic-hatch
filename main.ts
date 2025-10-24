@@ -1,5 +1,14 @@
-import { Notice, Plugin, PluginSettingTab, Setting, WorkspaceWindow } from 'obsidian';
-import { toggleAlwaysOnTop, isWindowPinned, AlwaysOnTopResult } from './src/electron';
+import { Notice, Plugin, PluginSettingTab, Setting, WorkspaceLeaf, WorkspaceWindow, TFile } from 'obsidian';
+import {
+	toggleAlwaysOnTop,
+	isWindowPinned,
+	AlwaysOnTopResult,
+	getCurrentBrowserWindow,
+	getBrowserWindowIds,
+	setWindowAlwaysOnTopById,
+	focusWindowById,
+	blurCurrentWindow
+} from './src/electron';
 
 interface AlwaysOnTopSettings {
 	showIndicatorInMainWindow: boolean;
@@ -24,6 +33,10 @@ export default class AlwaysOnTopPlugin extends Plugin {
 	private pinIndicators: Map<Document, HTMLElement> = new Map();
 	private windowPinStates: Map<Document, boolean> = new Map();
 	private updateInterval: number | null = null;
+	private activePopupWindowId: number | null = null;
+	private activePopupDoc: Document | null = null;
+	private pendingPopupInfo: { existingWindowIds: Set<number> } | null = null;
+	private pendingPopupFinalizeTimeout: number | null = null;
 
 	async onload() {
 		await this.loadSettings();
@@ -33,6 +46,18 @@ export default class AlwaysOnTopPlugin extends Plugin {
 			id: 'toggle-window-pin',
 			name: 'Toggle Window Pin for Always on Top',
 			callback: () => this.togglePin(),
+		});
+
+		// Add command for launching an always-on-top popout window
+		this.addCommand({
+			id: 'open-always-on-top-popout',
+			name: 'Open Always-On-Top Popout',
+			callback: () => this.openAlwaysOnTopPopout(),
+		});
+
+		// Register protocol handler for external URI triggers
+		this.registerObsidianProtocolHandler('aot-popup', async () => {
+			await this.openAlwaysOnTopPopout();
 		});
 
 		// Add settings tab
@@ -45,6 +70,7 @@ export default class AlwaysOnTopPlugin extends Plugin {
 		this.registerEvent(
 			this.app.workspace.on('window-open', (win: WorkspaceWindow) => {
 				this.addPinIndicatorToWindow(win.doc);
+				this.handlePopoutWindowOpened(win.doc);
 			})
 		);
 
@@ -52,6 +78,7 @@ export default class AlwaysOnTopPlugin extends Plugin {
 		this.registerEvent(
 			this.app.workspace.on('window-close', (win: WorkspaceWindow) => {
 				this.removePinIndicatorFromWindow(win.doc);
+				this.handlePopoutWindowClosed(win.doc);
 			})
 		);
 
@@ -74,6 +101,14 @@ export default class AlwaysOnTopPlugin extends Plugin {
 	}
 
 	onunload() {
+		if (this.pendingPopupFinalizeTimeout !== null) {
+			window.clearTimeout(this.pendingPopupFinalizeTimeout);
+			this.pendingPopupFinalizeTimeout = null;
+		}
+		this.pendingPopupInfo = null;
+		this.activePopupWindowId = null;
+		this.activePopupDoc = null;
+
 		this.removeAllPinIndicators();
 		if (this.updateInterval !== null) {
 			window.clearInterval(this.updateInterval);
@@ -275,6 +310,117 @@ export default class AlwaysOnTopPlugin extends Plugin {
 			indicator.addClass('is-pinned');
 		} else {
 			indicator.removeClass('is-pinned');
+		}
+	}
+
+	private async openAlwaysOnTopPopout() {
+		if (this.pendingPopupInfo) {
+			return;
+		}
+
+		if (this.activePopupWindowId) {
+			setWindowAlwaysOnTopById(this.activePopupWindowId, true, 'floating');
+			focusWindowById(this.activePopupWindowId);
+			return;
+		}
+
+		const currentWindow = getCurrentBrowserWindow();
+		if (!currentWindow) {
+			new Notice('Unable to control windows on this platform.');
+			return;
+		}
+
+		const existingWindowIds = new Set(getBrowserWindowIds());
+		existingWindowIds.add(currentWindow.id);
+
+		this.pendingPopupInfo = {
+			existingWindowIds
+		};
+
+		blurCurrentWindow();
+
+		const popoutLeaf: WorkspaceLeaf = this.app.workspace.openPopoutLeaf();
+
+		const activeFile: TFile | null = this.app.workspace.getActiveFile();
+		if (activeFile) {
+			try {
+				await popoutLeaf.openFile(activeFile);
+			} catch (error) {
+				console.error('Always On Top plugin: failed to open file in pop-out window.', error);
+			}
+		}
+	}
+
+	private handlePopoutWindowOpened(doc: Document) {
+		if (!this.pendingPopupInfo) {
+			return;
+		}
+
+		this.clearPendingPopupTimeout();
+		this.finalizePendingPopout(doc);
+	}
+
+	private finalizePendingPopout(doc: Document, attempt = 0) {
+		if (!this.pendingPopupInfo) {
+			return;
+		}
+
+		const newWindowId = this.findNewBrowserWindowId(this.pendingPopupInfo.existingWindowIds);
+		if (!newWindowId) {
+			if (attempt >= 10) {
+				this.pendingPopupInfo = null;
+				this.pendingPopupFinalizeTimeout = null;
+				return;
+			}
+
+			this.pendingPopupFinalizeTimeout = window.setTimeout(() => {
+				this.finalizePendingPopout(doc, attempt + 1);
+			}, 75);
+			return;
+		}
+
+		this.pendingPopupInfo = null;
+		this.pendingPopupFinalizeTimeout = null;
+		this.activePopupWindowId = newWindowId;
+		this.activePopupDoc = doc;
+
+		setWindowAlwaysOnTopById(newWindowId, true, 'floating');
+		focusWindowById(newWindowId);
+		this.windowPinStates.set(doc, true);
+		this.updateIndicatorForWindow(doc);
+	}
+
+	private findNewBrowserWindowId(existingWindowIds: Set<number>): number | null {
+		const currentIds = getBrowserWindowIds();
+		for (const id of currentIds) {
+			if (!existingWindowIds.has(id)) {
+				return id;
+			}
+		}
+		return null;
+	}
+
+	private handlePopoutWindowClosed(doc: Document) {
+		if (!this.activePopupDoc || doc !== this.activePopupDoc) {
+			return;
+		}
+
+		this.clearPendingPopupTimeout();
+		this.activePopupDoc = null;
+		this.pendingPopupInfo = null;
+
+		const popupWindowId = this.activePopupWindowId;
+		this.activePopupWindowId = null;
+
+		if (popupWindowId !== null) {
+			setWindowAlwaysOnTopById(popupWindowId, false, 'floating');
+		}
+	}
+
+	private clearPendingPopupTimeout() {
+		if (this.pendingPopupFinalizeTimeout !== null) {
+			window.clearTimeout(this.pendingPopupFinalizeTimeout);
+			this.pendingPopupFinalizeTimeout = null;
 		}
 	}
 
