@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-sample-plugin",
-	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"name": "always-on-top",
+	"version": "0.1.0",
+	"description": "Use a pin to keep your Obsidian window always on top.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
