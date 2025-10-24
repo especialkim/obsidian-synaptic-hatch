@@ -12,9 +12,9 @@ export interface AlwaysOnTopSettings {
 export const DEFAULT_SETTINGS: AlwaysOnTopSettings = {
 	showIndicatorInMainWindow: false,
 	showIndicatorInPopoutWindows: true,
-	mainIndicatorOffsetTop: 60,
+	mainIndicatorOffsetTop: 80,
 	mainIndicatorOffsetRight: 12,
-	popoutIndicatorOffsetTop: 16,
+	popoutIndicatorOffsetTop: 80,
 	popoutIndicatorOffsetRight: 12,
 };
 

@@ -110,14 +110,17 @@ export class PopoutManager {
 			console.log('[AOT Popout] Main window kept focused (focused:', windowIsFocused, ')');
 		}
 
-		this.plugin.app.workspace.openPopoutLeaf();
-		// const popoutLeaf: WorkspaceLeaf = this.plugin.app.workspace.openPopoutLeaf();
-		// const activeFile: TFile | null = this.plugin.app.workspace.getActiveFile();
-		// if (activeFile) {
-		// 	popoutLeaf.openFile(activeFile).catch((error) => {
-		// 		console.error('Always On Top plugin: failed to open file in pop-out window.', error);
-		// 	});
-		// }
+		/* Blank Tab 으로 열기 */
+		// this.plugin.app.workspace.openPopoutLeaf();
+
+		/* Focused Tab 을 새 창으로 열기 */
+		const popoutLeaf: WorkspaceLeaf = this.plugin.app.workspace.openPopoutLeaf();
+		const activeFile: TFile | null = this.plugin.app.workspace.getActiveFile();
+		if (activeFile) {
+			popoutLeaf.openFile(activeFile).catch((error) => {
+				console.error('Always On Top plugin: failed to open file in pop-out window.', error);
+			});
+		}
 	}
 
 	handleWindowOpened(doc: Document): void {

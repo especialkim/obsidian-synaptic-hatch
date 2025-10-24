@@ -14,7 +14,7 @@ export default class AlwaysOnTopPlugin extends Plugin {
 	async onload() {
 		this.settings = await loadPluginSettings(this);
 
-		this.indicators = new IndicatorManager(this, () => executeToggleWindowPin(this.indicators));
+		this.indicators = new IndicatorManager(this, () => executeToggleWindowPin(this, this.indicators));
 		this.popouts = new PopoutManager(this, this.indicators);
 
 		this.indicators.init();

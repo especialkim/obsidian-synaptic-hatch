@@ -1,7 +1,7 @@
 {
-	"name": "always-on-top",
+	"name": "synaptic-hatch",
 	"version": "0.1.0",
-	"description": "Use a pin to keep your Obsidian window always on top.",
+	"description": "Always-on-Top pin for Obsidian — your quick memo portal beyond the app.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
