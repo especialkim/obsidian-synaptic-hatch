@@ -174,29 +174,65 @@ export function setWindowAlwaysOnTopById(id: number, flag: boolean, level: strin
 }
 
 export function focusWindowById(id: number): boolean {
+	console.log('[AOT Electron] focusWindowById called for window:', id);
 	const win = getBrowserWindowById(id);
 	if (!win) {
+		console.log('[AOT Electron] Window not found:', id);
 		return false;
 	}
 
 	try {
 		win.focus();
+		console.log('[AOT Electron] Window focused successfully:', id);
 		return true;
 	} catch (error) {
+		console.log('[AOT Electron] Failed to focus window:', id, error);
 		return false;
 	}
 }
 
 export function blurCurrentWindow(): boolean {
 	const win = getCurrentBrowserWindow();
-	if (!win || !win.blur) {
+	if (!win) {
+		console.log('[AOT Electron] blurCurrentWindow: no window found');
+		return false;
+	}
+	
+	if (!win.blur) {
+		console.log('[AOT Electron] blurCurrentWindow: blur method not available on window:', win.id);
+		return false;
+	}
+
+	try {
+		console.log('[AOT Electron] Blurring window:', win.id);
+		win.blur();
+		console.log('[AOT Electron] Window blurred successfully:', win.id);
+		return true;
+	} catch (error) {
+		console.log('[AOT Electron] Failed to blur window:', win.id, error);
+		return false;
+	}
+}
+
+export function blurWindowById(id: number): boolean {
+	console.log('[AOT Electron] blurWindowById called for window:', id);
+	const win = getBrowserWindowById(id);
+	if (!win) {
+		console.log('[AOT Electron] Window not found:', id);
+		return false;
+	}
+	
+	if (!win.blur) {
+		console.log('[AOT Electron] blurWindowById: blur method not available on window:', id);
 		return false;
 	}
 
 	try {
 		win.blur();
+		console.log('[AOT Electron] Window blurred successfully:', id);
 		return true;
 	} catch (error) {
+		console.log('[AOT Electron] Failed to blur window:', id, error);
 		return false;
 	}
 }
