@@ -1,5 +1,23 @@
 import { Plugin } from 'obsidian';
 
+export type PopoutCommandType = 'blank' | 'file' | 'folder' | 'journal';
+export type JournalPeriod = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+
+export interface CustomPopoutCommand {
+	id: string;
+	name: string;
+	type: PopoutCommandType;
+	enabled: boolean;
+	config: {
+		filePath?: string;
+		folderPath?: string;
+		fileNameRule?: string;
+		useTemplate?: boolean;
+		templatePath?: string;
+		journalPeriod?: JournalPeriod;
+	};
+}
+
 export interface AlwaysOnTopSettings {
 	showIndicatorInMainWindow: boolean;
 	showIndicatorInPopoutWindows: boolean;
@@ -11,6 +29,9 @@ export interface AlwaysOnTopSettings {
 	mainIndicatorIconSize: number;
 	popoutIndicatorSize: number;
 	popoutIndicatorIconSize: number;
+	customPopoutCommands: CustomPopoutCommand[];
+	dateFormat: string;
+	timeFormat: string;
 }
 
 export const DEFAULT_SETTINGS: AlwaysOnTopSettings = {
@@ -24,6 +45,9 @@ export const DEFAULT_SETTINGS: AlwaysOnTopSettings = {
 	mainIndicatorIconSize: 15,
 	popoutIndicatorSize: 30,
 	popoutIndicatorIconSize: 15,
+	customPopoutCommands: [],
+	dateFormat: 'YYYY-MM-DD',
+	timeFormat: 'HH:mm',
 };
 
 export async function loadPluginSettings(plugin: Plugin): Promise<AlwaysOnTopSettings> {

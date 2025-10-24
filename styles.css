@@ -50,3 +50,55 @@
 	width: 3rem;
 	text-align: right;
 }
+
+/* Custom Popout Commands */
+.synaptic-hatch-custom-commandes-container {
+    background-color: var(--background-secondary);
+    border-radius: var(--radius-m);
+    border: 1px solid var(--background-modifier-border);
+    padding: var(--size-4-4);
+}
+
+.synaptic-hatch-custom-command-item {
+    padding-top: 0;
+    border: 0;
+}
+
+.synaptic-hatch-custom-command-item:last-child {
+	padding-bottom: 0;
+}
+
+.synaptic-hatch-custom-command-item .setting-item-info {
+	flex: 0 0 auto !important;
+	margin-inline-end: var(--size-4-2) !important;
+}
+
+.synaptic-hatch-custom-command-item-sub-controls {
+    display: flex;
+    flex-basis: 100%;
+}
+
+.synaptic-hatch-custom-command-item-sub-controls .setting-item {
+	width: 100%;
+    padding: 0;
+    border: 0;
+    align-items: center;
+}
+
+.synaptic-hatch-custom-command-item-sub-controls .setting-item input,
+.synaptic-hatch-custom-command-item-sub-controls .setting-item select {
+    width: 100%;
+	max-width: initial;
+}
+
+.synaptic-hatch-custom-command-item-sub-controls .setting-item select{
+	text-align: center;
+}
+
+.synaptic-hatch-custom-command-item-sub-controls input:disabled {
+	background-color: var(--background-primary-alt);
+}
+
+.synaptic-hatch-custom-command-add-button-container {
+	border: 0;
+}
