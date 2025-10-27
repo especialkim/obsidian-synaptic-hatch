@@ -255,7 +255,7 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 					if (cmd.enabled) {
 						const uri = getCustomCommandURI(this.plugin, cmd);
 						navigator.clipboard.writeText(uri);
-						new Notice(`Custom command #${index + 1} URI copied to clipboard`);
+						new Notice(`Custom Popout #${index + 1} URI copied to clipboard`);
 					}
 				});
 			});

@@ -28,7 +28,7 @@ export function getFolderNameOfPath(path: string) {
 
 export function getCustomCommandURI(plugin: AlwaysOnTopPlugin, cmd: CustomPopoutCommand): string {
     const vaultName = encodeURIComponent(plugin.app.vault.getName());
-    return `obsidian://custom-command?vault=${vaultName}&id=${cmd.id}`;
+    return `obsidian://custom-popout?vault=${vaultName}&id=${cmd.id}`;
 }
 
 /**
