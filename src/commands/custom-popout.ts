@@ -11,7 +11,6 @@ export function registerCustomPopoutCommands(plugin: AlwaysOnTopPlugin, popouts:
 }
 
 export function registerCustomPopoutCommand(plugin: AlwaysOnTopPlugin, popouts: PopoutManager, customCommand: CustomPopoutCommand){
-
     plugin.addCommand({
         id: customCommand.id,
         name: customCommand.name,
@@ -22,6 +21,6 @@ export function registerCustomPopoutCommand(plugin: AlwaysOnTopPlugin, popouts: 
 }
 
 export function removeCustomPopoutCommand(plugin: AlwaysOnTopPlugin, customCommand: CustomPopoutCommand){
-
+    plugin.removeCommand(customCommand.id);
 }
 

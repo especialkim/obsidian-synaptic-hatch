@@ -5,6 +5,7 @@ import { Notice } from 'obsidian';
 import type { App } from 'obsidian';
 import { registerCustomCommand, removeCustomCommand } from './commands';
 import { getAvailableGranularities, isJournalAvailable } from './utils/journalUtils';
+import { getCustomCommandURI, getFileNameOfPath, getFolderNameOfPath } from './utils/pathUtils';
 
 enum CustomCommandType {
 	BLANK = 'blank',
@@ -225,7 +226,7 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 				btn.setDisabled(!cmd.enabled);
 				btn.onClick(() => {
 					if (cmd.enabled) {
-						const uri = `obsidian://synaptic-hatch-custom-command?vault=${this.plugin.app.vault.getName()}&id=${cmd.id}`;
+						const uri = getCustomCommandURI(this.plugin, cmd);
 						navigator.clipboard.writeText(uri);
 						new Notice(`Custom command #${index + 1} URI copied to clipboard`);
 					}
@@ -506,45 +507,20 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 	
 		switch(type){
 			case 'blank':
-				customCommand.name = 'Open a new blank Always-on-Top Popout Window';
+				customCommand.name = 'Custom Popout> Open a new blank Always-on-Top Popout Window';
 				break;
 			case 'file':
-				const fileName = this.getFileNameOfPath(customCommand.config.filePath || '');
-				customCommand.name = `Open <${fileName}> in an Always-on-Top Popout Window`;
+				const fileName = getFileNameOfPath(customCommand.config.filePath || '');
+				customCommand.name = `Custom Popout> Open <${fileName}> in an Always-on-Top Popout Window`;
 				break;
 			case 'folder':
-				const folder = this.getFolderNameOfPath(customCommand.config.folderPath || '');
-				customCommand.name = `Create a new note in <${folder}> and open it in an Always-on-Top Popout Window`;
+				const folder = getFolderNameOfPath(customCommand.config.folderPath || '');
+				customCommand.name = `Custom Popout> Create a new note in <${folder}> and open it in an Always-on-Top Popout Window`;
 				break;
 			case 'journal':
-				console.log("here")
 				const subType = customCommand.config.journalPeriod || 'daily';
-				customCommand.name = `Open <${subType}> journal in an Always-on-Top Popout Window`;
+				customCommand.name = `Custom Popout> Open <${subType}> journal in an Always-on-Top Popout Window`;
 				break;
 		}
-	}
-	
-	private getFileNameOfPath(path: string){
-		return path.split('/').pop() || path;
-	}
-	
-	private getFolderNameOfPath(path: string) {
-		const parts = path.split('/').filter(Boolean);
-	
-		if (parts.length === 0) {
-			return '';
-		}
-	
-		const last = parts[parts.length - 1];
-	
-		if (last.includes('.')) {
-			if (parts.length >= 2) {
-				return parts[parts.length - 2] || '';
-			} else {
-				return '';
-			}
-		}
-	
-		return last;
 	}
 }

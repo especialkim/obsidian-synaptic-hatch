@@ -23,6 +23,6 @@ export function registerCustomCommand(plugin: AlwaysOnTopPlugin, customCommand: 
 }
 
 export function removeCustomCommand(plugin: AlwaysOnTopPlugin, customCommand: CustomPopoutCommand) {
-	new Notice(`Custom command ${customCommand.id} removed`);
+	removeCustomPopoutCommand(plugin, customCommand);
 }
 

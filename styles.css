@@ -95,8 +95,13 @@
 }
 
 .synaptic-hatch-custom-command-item-options .setting-item-control,
-.synaptic-hatch-custom-command-item-options .setting-item-control input {
+.synaptic-hatch-custom-command-item-options .setting-item-control input,
+.synaptic-hatch-custom-command-item-options .setting-item-control select {
     width: 100%;
+}
+
+.synaptic-hatch-custom-command-item-options .setting-item-control select {
+    max-width: initial;
 }
 
 .synaptic-hatch-custom-command-item {
