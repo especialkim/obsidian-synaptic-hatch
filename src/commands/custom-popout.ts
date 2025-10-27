@@ -1,9 +1,13 @@
 import type AlwaysOnTopPlugin from '../../main';
-import { CustomPopoutCommand, PopoutCommandType } from 'src/setting/settings';
-import { Notice } from 'obsidian';
+import { CustomPopoutCommand } from 'src/setting/settings';
 import type { PopoutManager } from '../popout/popout-manager';
 
 export function registerCustomPopoutCommands(plugin: AlwaysOnTopPlugin, popouts: PopoutManager){
+
+    if(!plugin.settings.useCustomPopoutCommands){
+        return;
+    }
+
     const customCommands = plugin.settings.customPopoutCommands;
     customCommands.forEach(customCommand => {
         registerCustomPopoutCommand(plugin, popouts, customCommand);
@@ -26,6 +30,10 @@ export function registerCustomPopoutCommands(plugin: AlwaysOnTopPlugin, popouts:
 }
 
 export function registerCustomPopoutCommand(plugin: AlwaysOnTopPlugin, popouts: PopoutManager, customCommand: CustomPopoutCommand){
+    if(!customCommand.enabled){
+        return;
+    }
+    
     plugin.addCommand({
         id: customCommand.id,
         name: customCommand.name,

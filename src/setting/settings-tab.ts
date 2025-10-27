@@ -33,134 +33,130 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
-	display(): void {
+	/**
+	 * Creates a collapsible section with a toggle switch in the header.
+	 * Reusable component for creating consistent section layouts.
+	 */
+	private createCollapsibleSection(config: {
+		container: HTMLElement;
+		name: string;
+		desc: string;
+		isEnabled: () => boolean;
+		onToggle: (value: boolean) => Promise<void>;
+		renderContent: (contentEl: HTMLElement) => void;
+	}): { sectionEl: HTMLElement; headerEl: HTMLElement; contentEl: HTMLElement } {
+		const sectionEl = config.container.createDiv({ cls: 'synaptic-hatch-section' });
+		const headerEl = sectionEl.createDiv({ cls: 'synaptic-hatch-section-header' });
+		const contentEl = sectionEl.createDiv({ cls: 'synaptic-hatch-section-content' });
 
+		// Create heading
+		new Setting(headerEl)
+			.setName(config.name)
+			.setDesc(config.desc)
+			.setHeading();
+
+		// Create toggle
+		new Setting(headerEl)
+			.addToggle((toggle) =>
+				toggle.setValue(config.isEnabled()).onChange(async (value) => {
+					await config.onToggle(value);
+					this.toggleSectionVisibility(contentEl, value);
+				}),
+			);
+
+		// Set initial visibility
+		this.toggleSectionVisibility(contentEl, config.isEnabled());
+
+		// Render content
+		config.renderContent(contentEl);
+
+		return { sectionEl, headerEl, contentEl };
+	}
+
+	/**
+	 * Toggles the visibility of a section content element.
+	 */
+	private toggleSectionVisibility(element: HTMLElement, isVisible: boolean): void {
+		if (isVisible) {
+			element.removeClass('hidden');
+		} else {
+			element.addClass('hidden');
+		}
+	}
+
+	display(): void {
 		const { containerEl } = this;
 		
 		containerEl.empty();
 		containerEl.addClass('synaptic-hatch-settings');
 
 		/* Section : Main Window Indicator  */
-		const mainWindowSection = containerEl.createDiv({ cls: 'synaptic-hatch-section' });
-		const mainWindowSectionHeader =mainWindowSection.createDiv({ cls: 'synaptic-hatch-section-header' });
-		const mainWindowSectionContent = mainWindowSection.createDiv({ cls: 'synaptic-hatch-section-content' });
-
-		new Setting(mainWindowSectionHeader)
-			.setName('Main Window Indicator')
-			.setDesc('By default, the pin indicator appears only when the main window is pinned, and disappears when unpinned.')
-			.setHeading();
-		
-		new Setting(mainWindowSectionHeader)
-			.addToggle((toggle) =>
-				toggle.setValue(this.plugin.settings.showIndicatorInMainWindow).onChange(async (value) => {
-					this.plugin.settings.showIndicatorInMainWindow = value;
-					await this.plugin.persistSettings();
-					if(!value){
-						mainWindowSectionContent.addClass('hidden')
-					}else{
-						mainWindowSectionContent.removeClass('hidden')
-					}
-				}),
-			);
-		
-		if(!this.plugin.settings.showIndicatorInMainWindow){
-			mainWindowSectionContent.addClass('hidden')
-		}else{
-			mainWindowSectionContent.removeClass('hidden')
-		}
-
-		this.createMinWindowSectionContent(mainWindowSectionContent);
-
+		this.createCollapsibleSection({
+			container: containerEl,
+			name: 'Main Window Indicator',
+			desc: 'By default, the pin indicator appears only when the main window is pinned, and disappears when unpinned.',
+			isEnabled: () => this.plugin.settings.showIndicatorInMainWindow,
+			onToggle: async (value) => {
+				this.plugin.settings.showIndicatorInMainWindow = value;
+				await this.plugin.persistSettings();
+			},
+			renderContent: (contentEl) => this.createMinWindowSectionContent(contentEl),
+		});
 
 		/* Section : Pop-out Window Indicator */
-		const popoutWindowSection = containerEl.createDiv({ cls: 'synaptic-hatch-section' });
-		const popoutWindowSectionHeader =popoutWindowSection.createDiv({ cls: 'synaptic-hatch-section-header' });
-		const popoutWindowSectionContent = popoutWindowSection.createDiv({ cls: 'synaptic-hatch-section-content' });
-
-		new Setting(popoutWindowSectionHeader)
-			.setName('Pop-out Window Indicator')
-			.setDesc('By default, the pin indicator appears only when the main window is pinned, and disappears when unpinned.')
-			.setHeading();
-		
-		new Setting(popoutWindowSectionHeader)
-			.addToggle((toggle) =>
-				toggle.setValue(this.plugin.settings.showIndicatorInPopoutWindows).onChange(async (value) => {
-					this.plugin.settings.showIndicatorInPopoutWindows = value;
-					await this.plugin.persistSettings();
-					if(!value){
-						popoutWindowSectionContent.addClass('hidden')
-					}else{
-						popoutWindowSectionContent.removeClass('hidden')
-					}
-				}),
-			);
-		
-		if(!this.plugin.settings.showIndicatorInPopoutWindows){
-			popoutWindowSectionContent.addClass('hidden')
-		}else{
-			popoutWindowSectionContent.removeClass('hidden')
-		}
-
-		this.createPopoutWindowSectionContent(popoutWindowSectionContent);
-
+		this.createCollapsibleSection({
+			container: containerEl,
+			name: 'Pop-out Window Indicator',
+			desc: 'By default, the pin indicator appears only when the main window is pinned, and disappears when unpinned.',
+			isEnabled: () => this.plugin.settings.showIndicatorInPopoutWindows,
+			onToggle: async (value) => {
+				this.plugin.settings.showIndicatorInPopoutWindows = value;
+				await this.plugin.persistSettings();
+			},
+			renderContent: (contentEl) => this.createPopoutWindowSectionContent(contentEl),
+		});
 
 		/* Section : Custom Popout Commands */
-		const customPopoutCommandsSection = containerEl.createDiv({ cls: 'synaptic-hatch-section' });
-		const customPopoutCommandsSectionHeader =customPopoutCommandsSection.createDiv({ cls: 'synaptic-hatch-section-header' });
-		const customPopoutCommandsSectionContent = customPopoutCommandsSection.createDiv({ cls: 'synaptic-hatch-section-content' });
-		const customPopoutCommandsSettingsContainer = customPopoutCommandsSectionContent.createDiv({ cls: 'synaptic-hatch-custom-commandes-container' });
-		const customPopoutCommandsAddButtonContainer = customPopoutCommandsSectionContent.createDiv({ cls: 'synaptic-hatch-custom-command-add-button-container' });
+		const { contentEl: customCommandsContentEl } = this.createCollapsibleSection({
+			container: containerEl,
+			name: 'Custom Popout Commands',
+			desc: 'Create custom commands for opening pop-out windows with different configurations.',
+			isEnabled: () => this.plugin.settings.useCustomPopoutCommands,
+			onToggle: async (value) => {
+				this.plugin.settings.useCustomPopoutCommands = value;
+				await this.plugin.persistSettings();
+			},
+			renderContent: (contentEl) => {
+				const settingsContainer = contentEl.createDiv({ cls: 'synaptic-hatch-custom-commandes-container' });
+				const addButtonContainer = contentEl.createDiv({ cls: 'synaptic-hatch-custom-command-add-button-container' });
 
-		new Setting(customPopoutCommandsSectionHeader)
-			.setName('Custom Popout Commands')
-			.setDesc('Create custom commands for opening pop-out windows with different configurations.')
-			.setHeading();
-		
-		new Setting(customPopoutCommandsSectionHeader)
-			.addToggle((toggle) =>
-				toggle.setValue(this.plugin.settings.useCustomPopoutCommands).onChange(async (value) => {
-					this.plugin.settings.useCustomPopoutCommands = value;
-					await this.plugin.persistSettings();
-					if(!value){
-						customPopoutCommandsSectionContent.addClass('hidden')
-					}else{
-						customPopoutCommandsSectionContent.removeClass('hidden')
-					}
-				}),
-			);
-		
-		if(!this.plugin.settings.useCustomPopoutCommands){
-			customPopoutCommandsSectionContent.addClass('hidden')
-		}else{
-			customPopoutCommandsSectionContent.removeClass('hidden')
-		}
+				this.renderCustomCommandsSectionContent(settingsContainer);
 
-		this.renderCustomCommandsSectionContent(customPopoutCommandsSettingsContainer);
-
-		new Setting(customPopoutCommandsAddButtonContainer)
-		.setClass('synaptic-hatch-custom-command-add-button-container')
-		.addButton((btn) =>
-			btn
-				.setButtonText('+ Add Command')
-				.setCta()
-				.onClick(async () => {
-					const newCommand: CustomPopoutCommand = {
-						id: `custom-popout-${Date.now()}`,
-						name: '',
-						enabled: false,
-						config: {},
-						type: 'file',
-					};
-					this.plugin.settings.customPopoutCommands.push(newCommand);
-					await this.plugin.persistSettings();
-					this.renderCustomCommandsSectionContent(customPopoutCommandsSettingsContainer);
-				}),
-		);
-
+				new Setting(addButtonContainer)
+					.setClass('synaptic-hatch-custom-command-add-button-container')
+					.addButton((btn) =>
+						btn
+							.setButtonText('+ Add Command')
+							.setCta()
+							.onClick(async () => {
+								const newCommand: CustomPopoutCommand = {
+									id: `custom-popout-${Date.now()}`,
+									name: '',
+									enabled: false,
+									config: {},
+									type: 'file',
+								};
+								this.plugin.settings.customPopoutCommands.push(newCommand);
+								await this.plugin.persistSettings();
+								this.renderCustomCommandsSectionContent(settingsContainer);
+							}),
+					);
+			},
+		});
 
 		/* Section : Misc */
 		const miscSection = containerEl.createDiv({ cls: 'synaptic-hatch-section' });
-		const miscSectionHeader =miscSection.createDiv({ cls: 'synaptic-hatch-section-header' });
+		const miscSectionHeader = miscSection.createDiv({ cls: 'synaptic-hatch-section-header' });
 		const miscSectionContent = miscSection.createDiv({ cls: 'synaptic-hatch-section-content' });
 
 		new Setting(miscSectionHeader)
@@ -207,44 +203,16 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 					cmd.type = value as PopoutCommandType;
 					cmd.config = {};
 					await this.plugin.persistSettings();
-					this.renderCustomCommandOptions(options, value as PopoutCommandType, cmd, enable);
-					this.disableCustomCommandItem(enable, cmd);
+					this.renderCustomCommandOptions(options, value as PopoutCommandType, cmd, enable, customCommandsSectionContent);
+					this.disableCustomCommandItem(enable, cmd, customCommandsSectionContent);
 				});
 			});
 
 		if (cmd.type) {
-			this.renderCustomCommandOptions(options, cmd.type, cmd, enable);
+			this.renderCustomCommandOptions(options, cmd.type, cmd, enable, customCommandsSectionContent);
 		}
 		
-		new Setting(enable)
-		.addToggle((toggle) => {
-			toggle.setValue(cmd.enabled);
-			toggle.onChange(async (value) => {
-				if(value){
-					// Enable 시도: 먼저 유효성 검사
-					const validationError = this.validateCustomCommandOptions(cmd);
-					if (validationError) {
-						// 유효성 검사 실패: disable 상태로 유지
-						new Notice(validationError);
-						this.disableCustomCommandItem(enable, cmd);
-						return;
-					}
-					// 유효성 검사 성공: enable
-					cmd.enabled = true;
-					this.renderCustomCommandsSectionContent(customCommandsSectionContent);
-					this.setNameOfCustomPopoutCommand(cmd);
-					await this.plugin.persistSettings();
-					registerCustomCommand(this.plugin, cmd, this.plugin.popouts);
-				}else{
-					// Disable
-					cmd.enabled = false;
-					this.renderCustomCommandsSectionContent(customCommandsSectionContent);
-					this.setNameOfCustomPopoutCommand(cmd);
-					await this.plugin.persistSettings();
-					removeCustomCommand(this.plugin, cmd);
-				}
-			});
-		});
+		this.createCommandToggle(enable, cmd, customCommandsSectionContent);
 
 		new Setting(copy)
 			.addButton((btn) => {
@@ -275,6 +243,10 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 	
 	}
 
+	/**
+	 * Creates a number input setting with validation.
+	 * Reusable component for numeric configuration fields.
+	 */
 	private createNumberSetting(
 		parent: HTMLElement,
 		options: {
@@ -312,47 +284,57 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 					text.setValue(String(options.getValue()));
 				});
 			});
-	};
+	}
 
-	private createMinWindowSectionContent(mainWindowSectionContent: HTMLElement): void {
-		this.createNumberSetting(mainWindowSectionContent, {
+	/**
+	 * Creates indicator settings for a specific window type.
+	 * Consolidated method for both main and popout window indicators.
+	 */
+	private createIndicatorSettings(
+		container: HTMLElement,
+		type: 'main' | 'popout'
+	): void {
+		const prefix = type === 'main' ? 'main' : 'popout';
+		const windowLabel = type === 'main' ? 'main window' : 'pop-out windows';
+
+		this.createNumberSetting(container, {
 			name: 'Top offset (px)',
-			desc: 'Distance from the top edge of the main window.',
-			getValue: () => this.plugin.settings.mainIndicatorOffsetTop,
+			desc: `Distance from the top edge of the ${windowLabel}.`,
+			getValue: () => this.plugin.settings[`${prefix}IndicatorOffsetTop`],
 			onChange: async (value) => {
-				this.plugin.settings.mainIndicatorOffsetTop = value;
+				this.plugin.settings[`${prefix}IndicatorOffsetTop`] = value;
 				await this.plugin.persistSettings();
 			},
 		});
 
-		this.createNumberSetting(mainWindowSectionContent, {
+		this.createNumberSetting(container, {
 			name: 'Right offset (px)',
-			desc: 'Distance from the right edge of the main window.',
-			getValue: () => this.plugin.settings.mainIndicatorOffsetRight,
+			desc: `Distance from the right edge of the ${windowLabel}.`,
+			getValue: () => this.plugin.settings[`${prefix}IndicatorOffsetRight`],
 			onChange: async (value) => {
-				this.plugin.settings.mainIndicatorOffsetRight = value;
+				this.plugin.settings[`${prefix}IndicatorOffsetRight`] = value;
 				await this.plugin.persistSettings();
 			},
 		});
 
-		this.createNumberSetting(mainWindowSectionContent, {
+		this.createNumberSetting(container, {
 			name: 'Indicator size (px)',
 			desc: 'Width and height of the indicator box.',
-			getValue: () => this.plugin.settings.mainIndicatorSize,
+			getValue: () => this.plugin.settings[`${prefix}IndicatorSize`],
 			onChange: async (value) => {
-				this.plugin.settings.mainIndicatorSize = value;
+				this.plugin.settings[`${prefix}IndicatorSize`] = value;
 				await this.plugin.persistSettings();
 			},
 			min: 20,
 			max: 60,
 		});
 
-		this.createNumberSetting(mainWindowSectionContent, {
+		this.createNumberSetting(container, {
 			name: 'Icon size (px)',
 			desc: 'Size of the icon inside the indicator.',
-			getValue: () => this.plugin.settings.mainIndicatorIconSize,
+			getValue: () => this.plugin.settings[`${prefix}IndicatorIconSize`],
 			onChange: async (value) => {
-				this.plugin.settings.mainIndicatorIconSize = value;
+				this.plugin.settings[`${prefix}IndicatorIconSize`] = value;
 				await this.plugin.persistSettings();
 			},
 			min: 10,
@@ -360,50 +342,12 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 		});
 	}
 
+	private createMinWindowSectionContent(mainWindowSectionContent: HTMLElement): void {
+		this.createIndicatorSettings(mainWindowSectionContent, 'main');
+	}
+
 	private createPopoutWindowSectionContent(popoutWindowSectionContent: HTMLElement): void {
-		this.createNumberSetting(popoutWindowSectionContent, {
-			name: 'Top offset (px)',
-			desc: 'Distance from the top edge of pop-out windows.',
-			getValue: () => this.plugin.settings.popoutIndicatorOffsetTop,
-			onChange: async (value) => {
-				this.plugin.settings.popoutIndicatorOffsetTop = value;
-				await this.plugin.persistSettings();
-			},
-		});
-
-		this.createNumberSetting(popoutWindowSectionContent, {
-			name: 'Right offset (px)',
-			desc: 'Distance from the right edge of pop-out windows.',
-			getValue: () => this.plugin.settings.popoutIndicatorOffsetRight,
-			onChange: async (value) => {
-				this.plugin.settings.popoutIndicatorOffsetRight = value;
-				await this.plugin.persistSettings();
-			},
-		});
-
-		this.createNumberSetting(popoutWindowSectionContent, {
-			name: 'Indicator size (px)',
-			desc: 'Width and height of the indicator box.',
-			getValue: () => this.plugin.settings.popoutIndicatorSize,
-			onChange: async (value) => {
-				this.plugin.settings.popoutIndicatorSize = value;
-				await this.plugin.persistSettings();
-			},
-			min: 20,
-			max: 60,
-		});
-
-		this.createNumberSetting(popoutWindowSectionContent, {
-			name: 'Icon size (px)',
-			desc: 'Size of the icon inside the indicator.',
-			getValue: () => this.plugin.settings.popoutIndicatorIconSize,
-			onChange: async (value) => {
-				this.plugin.settings.popoutIndicatorIconSize = value;
-				await this.plugin.persistSettings();
-			},
-			min: 10,
-			max: 50,
-		});
+		this.createIndicatorSettings(popoutWindowSectionContent, 'popout');
 	}
 
 	private renderCustomCommandsSectionContent(customCommandsSectionContent: HTMLElement): void {
@@ -423,140 +367,220 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 		}
 	}
 
-	private renderCustomCommandOptions(options: HTMLElement, type: PopoutCommandType, cmd: CustomPopoutCommand, enable: HTMLElement): void {
+	/**
+	 * Handles configuration changes for custom commands.
+	 * Disables the command and persists the settings.
+	 */
+	private async handleConfigChange(
+		cmd: CustomPopoutCommand,
+		enableEl: HTMLElement,
+		customCommandsSectionContent: HTMLElement
+	): Promise<void> {
+		cmd.enabled = false;
+		await this.plugin.persistSettings();
+		this.disableCustomCommandItem(enableEl, cmd, customCommandsSectionContent);
+	}
+
+	/**
+	 * Renders options UI based on the command type.
+	 * Delegates to type-specific render methods.
+	 */
+	private renderCustomCommandOptions(
+		options: HTMLElement, 
+		type: PopoutCommandType, 
+		cmd: CustomPopoutCommand, 
+		enable: HTMLElement, 
+		customCommandsSectionContent: HTMLElement
+	): void {
 		options.empty();
 
-		if(type === CustomCommandType.BLANK){
-			new Setting(options)
-				.addText((text) => {
-					text.setPlaceholder('Open a new blank Always-on-Top Popout Window');
-					text.setDisabled(true);
-				})
-				.settingEl.addClass('is-disabled');
+		const context = { options, cmd, enable, customCommandsSectionContent };
+
+		switch (type) {
+			case CustomCommandType.BLANK:
+				this.renderBlankTypeOptions(context);
+				break;
+			case CustomCommandType.FILE:
+				this.renderFileTypeOptions(context);
+				break;
+			case CustomCommandType.FOLDER:
+				this.renderFolderTypeOptions(context);
+				break;
+			case CustomCommandType.JOURNAL:
+				this.renderJournalTypeOptions(context);
+				break;
 		}
-		
-	if(type === CustomCommandType.FILE){
-		new Setting(options)
+	}
+
+	/**
+	 * Renders options for blank type commands.
+	 */
+	private renderBlankTypeOptions(context: {
+		options: HTMLElement;
+		cmd: CustomPopoutCommand;
+		enable: HTMLElement;
+		customCommandsSectionContent: HTMLElement;
+	}): void {
+		new Setting(context.options)
+			.addText((text) => {
+				text.setPlaceholder('Open a new blank Always-on-Top Popout Window');
+				text.setDisabled(true);
+			})
+			.settingEl.addClass('is-disabled');
+	}
+
+	/**
+	 * Renders options for file type commands.
+	 */
+	private renderFileTypeOptions(context: {
+		options: HTMLElement;
+		cmd: CustomPopoutCommand;
+		enable: HTMLElement;
+		customCommandsSectionContent: HTMLElement;
+	}): void {
+		new Setting(context.options)
 			.addText((text) => {
 				text.setPlaceholder('Enter a file path');
-				text.setValue(cmd.config.filePath || '');
-				// text.inputEl.dataset.tooltip = 'Enter a file path';
+				text.setValue(context.cmd.config.filePath || '');
 				text.onChange(async (value) => {
-					cmd.config.filePath = value;
-					cmd.enabled = false;
-					await this.plugin.persistSettings();
-					this.disableCustomCommandItem(enable, cmd);
+					context.cmd.config.filePath = value;
+					await this.handleConfigChange(context.cmd, context.enable, context.customCommandsSectionContent);
 				});
-				// FileSuggest 추가
 				new FileSuggest(this.app, text.inputEl, this.plugin);
 			});
 	}
 
-	if(type === CustomCommandType.FOLDER){
-		new Setting(options)
-				.addText((text) => {
-					text.setPlaceholder('Enter a folder path');
-					text.setValue(cmd.config.folderPath || '');
-					// text.inputEl.dataset.tooltip = 'Enter a folder path';
-					text.onChange(async (value) => {
-						cmd.config.folderPath = value;
-						cmd.enabled = false;
-						await this.plugin.persistSettings();
-						this.disableCustomCommandItem(enable, cmd);
-					});
-					// FolderSuggest 추가
-					new FolderSuggest(this.app, text.inputEl, this.plugin);
+	/**
+	 * Renders options for folder type commands.
+	 */
+	private renderFolderTypeOptions(context: {
+		options: HTMLElement;
+		cmd: CustomPopoutCommand;
+		enable: HTMLElement;
+		customCommandsSectionContent: HTMLElement;
+	}): void {
+		// Folder path input
+		new Setting(context.options)
+			.addText((text) => {
+				text.setPlaceholder('Enter a folder path');
+				text.setValue(context.cmd.config.folderPath || '');
+				text.onChange(async (value) => {
+					context.cmd.config.folderPath = value;
+					await this.handleConfigChange(context.cmd, context.enable, context.customCommandsSectionContent);
 				});
-	
-				new Setting(options)
-					.addText((text) => {
-						text.setPlaceholder('Filename rule ({{date}} optional');
-						text.setValue(cmd.config.fileNameRule || '');
-						// text.inputEl.dataset.tooltip = 'Enter a file name rule';
-						text.onChange(async (value) => {
-							cmd.config.fileNameRule = value;
-							cmd.enabled = false;
-							await this.plugin.persistSettings();
-							this.disableCustomCommandItem(enable, cmd);
-						});
-					});
-	
-			new Setting(options)
-				.addText((text) => {
-					text.setPlaceholder('Enter a template file path');
-					text.setValue(cmd.config.templatePath || '');
-					text.inputEl.dataset.tooltip = 'Enter a template file path';
-					text.onChange(async (value) => {
-						cmd.config.templatePath = value;
-						cmd.enabled = false;
-						await this.plugin.persistSettings();
-						this.disableCustomCommandItem(enable, cmd);
-					});
-					// FileSuggest 추가
-					new FileSuggest(this.app, text.inputEl, this.plugin);
+				new FolderSuggest(this.app, text.inputEl, this.plugin);
+			});
+
+		// File name rule input
+		new Setting(context.options)
+			.addText((text) => {
+				text.setPlaceholder('Filename rule ({{date}} optional');
+				text.setValue(context.cmd.config.fileNameRule || '');
+				text.onChange(async (value) => {
+					context.cmd.config.fileNameRule = value;
+					await this.handleConfigChange(context.cmd, context.enable, context.customCommandsSectionContent);
 				});
-		}
+			});
 
-		if(type === CustomCommandType.JOURNAL){
+		// Template path input
+		new Setting(context.options)
+			.addText((text) => {
+				text.setPlaceholder('Enter a template file path');
+				text.setValue(context.cmd.config.templatePath || '');
+				text.inputEl.dataset.tooltip = 'Enter a template file path';
+				text.onChange(async (value) => {
+					context.cmd.config.templatePath = value;
+					await this.handleConfigChange(context.cmd, context.enable, context.customCommandsSectionContent);
+				});
+				new FileSuggest(this.app, text.inputEl, this.plugin);
+			});
+	}
 
-			const availableGranularities = getAvailableGranularities();
+	/**
+	 * Renders options for journal type commands.
+	 */
+	private renderJournalTypeOptions(context: {
+		options: HTMLElement;
+		cmd: CustomPopoutCommand;
+		enable: HTMLElement;
+		customCommandsSectionContent: HTMLElement;
+	}): void {
+		const availableGranularities = getAvailableGranularities();
 
-			new Setting(options)
+		new Setting(context.options)
 			.addDropdown((dropdown) => {
 				availableGranularities.forEach((granularity) => {
 					dropdown.addOption(granularity, granularity);
 				});
-				if(cmd.config.journalPeriod){
-					dropdown.setValue(cmd.config.journalPeriod);
-				}else{
+				
+				if (context.cmd.config.journalPeriod) {
+					dropdown.setValue(context.cmd.config.journalPeriod);
+				} else {
 					dropdown.setValue(availableGranularities[0]);
-					cmd.config.journalPeriod = availableGranularities[0];
+					context.cmd.config.journalPeriod = availableGranularities[0];
 				}
+
 				dropdown.onChange(async (value) => {
-					cmd.config.journalPeriod = value as JournalPeriod;
-					cmd.enabled = false;
-					await this.plugin.persistSettings();
-					this.disableCustomCommandItem(enable, cmd);
+					context.cmd.config.journalPeriod = value as JournalPeriod;
+					await this.handleConfigChange(context.cmd, context.enable, context.customCommandsSectionContent);
 				});
 			});
-		}
 	}
 
-	private disableCustomCommandItem(enable: HTMLElement, cmd: CustomPopoutCommand): void {
-		enable.empty();
-	
-		new Setting(enable)
+	/**
+	 * Creates a toggle control for enabling/disabling custom commands.
+	 * Handles validation, command registration, and UI updates.
+	 */
+	private createCommandToggle(
+		container: HTMLElement,
+		cmd: CustomPopoutCommand,
+		customCommandsSectionContent: HTMLElement
+	): void {
+		new Setting(container)
 			.addToggle((toggle) => {
-				toggle.setValue(false);
-				cmd.enabled = false;
-				void this.plugin.persistSettings();
+				toggle.setValue(cmd.enabled);
 				toggle.onChange(async (value) => {
-					if(value){
-						// Enable 시도: 먼저 유효성 검사
+					if (value) {
+						// Attempt to enable: validate first
 						const validationError = this.validateCustomCommandOptions(cmd);
 						if (validationError) {
-							// 유효성 검사 실패: disable 상태로 유지
+							// Validation failed: keep disabled
 							new Notice(validationError);
 							toggle.setValue(false);
 							cmd.enabled = false;
 							await this.plugin.persistSettings();
 							return;
 						}
-						// 유효성 검사 성공: enable
+						// Validation successful: enable
 						cmd.enabled = true;
 						await this.setNameOfCustomPopoutCommand(cmd);
 						await this.plugin.persistSettings();
 						registerCustomCommand(this.plugin, cmd, this.plugin.popouts);
-					}else{
+						this.renderCustomCommandsSectionContent(customCommandsSectionContent);
+					} else {
 						// Disable
 						cmd.enabled = false;
 						await this.setNameOfCustomPopoutCommand(cmd);
 						await this.plugin.persistSettings();
 						removeCustomCommand(this.plugin, cmd);
+						this.renderCustomCommandsSectionContent(customCommandsSectionContent);
 					}
 				});
-			})
-			
+			});
+	}
+
+	/**
+	 * Disables a custom command item by clearing and recreating the toggle.
+	 */
+	private disableCustomCommandItem(
+		enable: HTMLElement,
+		cmd: CustomPopoutCommand,
+		customCommandsSectionContent: HTMLElement
+	): void {
+		enable.empty();
+		cmd.enabled = false;
+		void this.plugin.persistSettings();
+		this.createCommandToggle(enable, cmd, customCommandsSectionContent);
 	}
 
 	private async setNameOfCustomPopoutCommand(customCommand: CustomPopoutCommand){
