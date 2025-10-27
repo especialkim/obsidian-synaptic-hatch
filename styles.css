@@ -51,54 +51,65 @@
 	text-align: right;
 }
 
+/* Settings Tab */
+.synaptic-hatch-settings .setting-item{
+	border: 0;
+}
+
+.synaptic-hatch-settings .hidden{
+	display: none;
+}
+
+.synaptic-hatch-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2em;
+	margin-bottom: 0.5em;
+}
+
+.synaptic-hatch-section-header .setting-item-name{
+	font-size: var(--h3-size);
+}
+
 /* Custom Popout Commands */
 .synaptic-hatch-custom-commandes-container {
     background-color: var(--background-secondary);
     border-radius: var(--radius-m);
     border: 1px solid var(--background-modifier-border);
     padding: var(--size-4-4);
+    margin-bottom: var(--size-4-2);
+}
+
+.synaptic-hatch-custom-commandes-container .setting-item {
+    padding: var(--size-4-2) 0;
+}
+
+.synaptic-hatch-custom-command-item-options .setting-item {
+    width: 100%;
+}
+
+.synaptic-hatch-custom-commandes-container .setting-item-info {
+    flex: 0 0 auto !important;
+    margin-inline-end: var(--size-4-2) !important;
+}
+
+.synaptic-hatch-custom-command-item-options .setting-item-control,
+.synaptic-hatch-custom-command-item-options .setting-item-control input {
+    width: 100%;
 }
 
 .synaptic-hatch-custom-command-item {
-    padding-top: 0;
-    border: 0;
-}
-
-.synaptic-hatch-custom-command-item:last-child {
-	padding-bottom: 0;
-}
-
-.synaptic-hatch-custom-command-item .setting-item-info {
-	flex: 0 0 auto !important;
-	margin-inline-end: var(--size-4-2) !important;
-}
-
-.synaptic-hatch-custom-command-item-sub-controls {
     display: flex;
-    flex-basis: 100%;
-}
-
-.synaptic-hatch-custom-command-item-sub-controls .setting-item {
-	width: 100%;
-    padding: 0;
-    border: 0;
     align-items: center;
 }
 
-.synaptic-hatch-custom-command-item-sub-controls .setting-item input,
-.synaptic-hatch-custom-command-item-sub-controls .setting-item select {
-    width: 100%;
-	max-width: initial;
+.synaptic-hatch-custom-command-item-options {
+    flex: 1;
+    display: flex;
 }
 
-.synaptic-hatch-custom-command-item-sub-controls .setting-item select{
-	text-align: center;
-}
-
-.synaptic-hatch-custom-command-item-sub-controls input:disabled {
-	background-color: var(--background-primary-alt);
-}
-
-.synaptic-hatch-custom-command-add-button-container {
-	border: 0;
+.synaptic-hatch-custom-commandes-container .setting-item-description {
+    text-align: center;
+    font-size: 1em;
 }

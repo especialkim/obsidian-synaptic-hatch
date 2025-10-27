@@ -11,6 +11,9 @@ import {
 import type AlwaysOnTopPlugin from '../../main';
 import type { IndicatorManager } from '../indicator-manager';
 import { markPopupDocument } from './document-marker';
+import { CustomPopoutCommand } from 'src/settings';
+import { createJournalNote } from '../utils/journalUtils';
+
 
 export interface PendingPopupInfo {
 	existingWindowIds: Set<number>;
@@ -55,7 +58,7 @@ export class PopoutManager {
 		}
 	}
 
-	openPopout(forceBackground: boolean = false): void {
+	async openPopout(forceBackground: boolean = false, cmd? : CustomPopoutCommand): Promise<void> {
 		
 		if (this.state.pendingPopupInfo) {
 			return;
@@ -87,17 +90,54 @@ export class PopoutManager {
 		} else {
 		}
 
-		/* Blank Tab 으로 열기 */
-		// this.plugin.app.workspace.openPopoutLeaf();
-
-		/* Focused Tab 을 새 창으로 열기 */
-		const popoutLeaf: WorkspaceLeaf = this.plugin.app.workspace.openPopoutLeaf();
-		const activeFile: TFile | null = this.plugin.app.workspace.getActiveFile();
-		if (activeFile) {
-			popoutLeaf.openFile(activeFile).catch((error) => {
-				console.error('Always On Top plugin: failed to open file in pop-out window.', error);
-			});
+		if(!cmd){
+			const popoutLeaf: WorkspaceLeaf = this.plugin.app.workspace.openPopoutLeaf();
+			const activeFile: TFile | null = this.plugin.app.workspace.getActiveFile();
+			if (activeFile) {
+				popoutLeaf.openFile(activeFile).catch((error) => {
+					console.error('Always On Top plugin: failed to open file in pop-out window.', error);
+				});
+			}
+			return;
 		}
+
+		if(cmd.type === 'file'){
+			const popoutLeaf = this.plugin.app.workspace.openPopoutLeaf();
+			const file = this.plugin.app.vault.getAbstractFileByPath(cmd.config.filePath || '');
+			if(file instanceof TFile){
+				popoutLeaf.openFile(file).catch((error) => {
+					console.error('Always On Top plugin: failed to open file in pop-out window.', error);
+				});
+			}
+			return;
+		}
+
+		if(cmd.type === 'blank'){
+			console.log('blank', cmd);
+			this.plugin.app.workspace.openPopoutLeaf();
+			return;
+		}
+
+		if(cmd.type === 'journal'){
+			const granularity = cmd.config.journalPeriod || 'daily';
+			
+			try {
+				const journalFile = await createJournalNote(granularity);
+				if (journalFile) {
+					const popoutLeaf = this.plugin.app.workspace.openPopoutLeaf();
+					popoutLeaf.openFile(journalFile).catch((error) => {
+						console.error('Always On Top plugin: failed to open journal note in pop-out window.', error);
+					});
+				} else {
+					new Notice(`Failed to create ${granularity} journal note.`);
+				}
+			} catch (error) {
+				console.error('Always On Top plugin: error creating journal note:', error);
+				new Notice(`Error creating ${granularity} journal note.`);
+			}
+			return;
+		}
+		
 	}
 
 	handleWindowOpened(doc: Document): void {

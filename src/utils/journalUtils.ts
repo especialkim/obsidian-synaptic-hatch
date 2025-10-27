@@ -1,0 +1,338 @@
+import { App, moment, TFile } from 'obsidian';
+import { 
+	createDailyNote, 
+	createWeeklyNote,
+	createMonthlyNote,
+	createQuarterlyNote,
+	createYearlyNote,
+	getAllDailyNotes, 
+	getAllWeeklyNotes,
+	getAllMonthlyNotes,
+	getAllQuarterlyNotes,
+	getAllYearlyNotes,
+	getDailyNote,
+	getWeeklyNote,
+	getMonthlyNote,
+	getQuarterlyNote,
+	getYearlyNote,
+	appHasDailyNotesPluginLoaded,
+	appHasWeeklyNotesPluginLoaded,
+	appHasMonthlyNotesPluginLoaded,
+	appHasQuarterlyNotesPluginLoaded,
+	appHasYearlyNotesPluginLoaded,
+	getDailyNoteSettings,
+	getWeeklyNoteSettings,
+	getMonthlyNoteSettings,
+	getQuarterlyNoteSettings,
+	getYearlyNoteSettings
+} from 'obsidian-daily-notes-interface';
+import { JournalPeriod } from '../settings';
+
+/**
+ * 특정 플러그인이 설치되고 활성화되어 있는지 확인
+ * @param app - Obsidian App 인스턴스
+ * @param pluginId - 확인할 플러그인 ID
+ * @returns 플러그인이 설치되고 활성화되어 있으면 true
+ */
+
+interface PeriodicNoteSettings {
+	format?: string;
+	folder?: string;
+	template?: string;
+}
+
+export function isPluginEnabled(app: App, pluginId: string): boolean {
+	const plugins = (app as any).plugins;
+	
+	if (!plugins) {
+		return false;
+	}
+	
+	// enabledPlugins는 Set 또는 배열일 수 있음
+	if (plugins.enabledPlugins) {
+		if (plugins.enabledPlugins instanceof Set) {
+			return plugins.enabledPlugins.has(pluginId);
+		} else if (Array.isArray(plugins.enabledPlugins)) {
+			return plugins.enabledPlugins.includes(pluginId);
+		}
+	}
+	
+	// plugins 객체에서 직접 확인
+	return !!plugins.plugins?.[pluginId];
+}
+
+/**
+ * Journal 기능이 사용 가능한지 확인
+ * Core Daily Notes 또는 Periodic Notes 플러그인이 활성화되어 있으면 true
+ * @returns Journal 기능 사용 가능 여부
+ */
+export function isJournalAvailable(): boolean {
+	return appHasDailyNotesPluginLoaded();
+}
+
+/**
+ * 특정 granularity가 활성화되어 있는지 확인
+ * @param granularity - 확인할 granularity
+ * @returns 활성화 여부
+ */
+export function isGranularityAvailable(granularity: JournalPeriod): boolean {
+	switch (granularity) {
+		case 'daily':
+			return appHasDailyNotesPluginLoaded();
+		case 'weekly':
+			return appHasWeeklyNotesPluginLoaded();
+		case 'monthly':
+			return appHasMonthlyNotesPluginLoaded();
+		case 'quarterly':
+			return appHasQuarterlyNotesPluginLoaded();
+		case 'yearly':
+			return appHasYearlyNotesPluginLoaded();
+		default:
+			return false;
+	}
+}
+
+/**
+ * 사용 가능한 granularity 목록 가져오기
+ * 사용자의 Periodic Notes 설정에 따라 동적으로 반환
+ * @returns 사용 가능한 granularity 배열
+ */
+export function getAvailableGranularities(): JournalPeriod[] {
+	const available: JournalPeriod[] = [];  
+	
+	const granularities: JournalPeriod[] = ['daily', 'weekly', 'monthly', 'quarterly', 'yearly'];
+	
+	for (const granularity of granularities) {
+		if (isGranularityAvailable(granularity)) {
+			available.push(granularity);
+		}
+	}
+	
+	return available;
+}
+
+/**
+ * Calendar 기능이 의미 있게 사용 가능한지 확인
+ * - 주/월/분기/연간 중 하나라도 사용 가능하거나, 커뮤니티 Calendar 플러그인이 활성화된 경우
+ */
+export function isCalendarFeatureAvailable(app?: App): boolean {
+    const granularitiesAvailable = (
+        isGranularityAvailable('daily') ||
+        isGranularityAvailable('weekly') ||
+        isGranularityAvailable('monthly') ||
+        isGranularityAvailable('quarterly') ||
+        isGranularityAvailable('yearly')
+    );
+    const communityCalendar = app ? isPluginEnabled(app, 'calendar') : false;
+    return granularitiesAvailable || communityCalendar;
+}
+
+/**
+ * Daily Note format 정보 가져오기
+ * obsidian-daily-notes-interface를 통해 설정 가져오기
+ * @returns format 패턴 문자열 (예: "YYYY-MM-DD(ddd)") 또는 기본값
+ */
+export function getDailyNoteFormat(): { format: string; folder: string } {
+	if (!isJournalAvailable()) {
+		return {
+			format: 'YYYY-MM-DD',
+			folder: ''
+		};
+	}
+	
+	try {
+		const settings = getDailyNoteSettings();
+		return {
+			format: settings.format || 'YYYY-MM-DD',
+			folder: settings.folder || ''
+		};
+	} catch (error) {
+		console.error('[Synaptic View] Daily Note 설정 가져오기 실패:', error);
+		return {
+			format: 'YYYY-MM-DD',
+			folder: ''
+		};
+	}
+}
+
+/**
+ * 오늘의 Daily Note 파일 경로 생성 (동적)
+ * @returns 오늘의 Daily Note 파일 경로
+ */
+export function getTodayDailyNotePath(): string {
+	const formatInfo = getDailyNoteFormat();
+	
+	try {
+		// moment를 사용해 오늘 날짜를 포맷팅 (매번 실행 시점의 오늘)
+		const today = moment().format(formatInfo.format);
+		
+		// 폴더가 있으면 경로 조합, 없으면 파일명만
+		const filePath = formatInfo.folder 
+			? `${formatInfo.folder}/${today}.md`
+			: `${today}.md`;
+		
+		return filePath;
+	} catch (error) {
+		console.error('[Synaptic View] Daily Note 경로 생성 실패:', error);
+		return 'YYYY-MM-DD.md';
+	}
+}
+
+/**
+ * Granularity별 Journal Note 경로 가져오기
+ * @param granularity - 노트 타입 (day, week, month, quarter, year)
+ * @returns Journal Note 파일 경로
+ */
+export function getJournalNotePath(granularity: JournalPeriod): string {
+	const today = moment();
+	let settings: PeriodicNoteSettings;
+	let formatPattern: string;
+	
+	try {
+		switch (granularity) {
+			case 'daily':
+				settings = getDailyNoteSettings();
+				formatPattern = settings.format || 'YYYY-MM-DD';
+				break;
+			case 'weekly':
+				settings = getWeeklyNoteSettings();
+				formatPattern = settings.format || 'gggg-[W]ww';
+				break;
+			case 'monthly':
+				settings = getMonthlyNoteSettings();
+				formatPattern = settings.format || 'YYYY-MM';
+				break;
+			case 'quarterly':
+				settings = getQuarterlyNoteSettings();
+				formatPattern = settings.format || 'YYYY-[Q]Q';
+				break;
+			case 'yearly':
+				settings = getYearlyNoteSettings();
+				formatPattern = settings.format || 'YYYY';
+				break;
+			default:
+				return 'YYYY-MM-DD.md';
+		}
+		
+		const filename = today.format(formatPattern);
+		const folder = settings.folder || '';
+		
+		return folder ? `${folder}/${filename}.md` : `${filename}.md`;
+		
+	} catch (error) {
+		console.error('[Synaptic View] Journal Note 경로 생성 실패:', error);
+		return 'YYYY-MM-DD.md';
+	}
+}
+
+/**
+ * Granularity별 Journal Note 생성
+ * @param granularity - 노트 타입 (day, week, month, quarter, year)
+ * @returns 생성된 TFile 또는 null
+ */
+export async function createJournalNote(granularity: JournalPeriod): Promise<TFile | null> {
+    try {
+        const today = moment();
+    let existingFile: TFile | null = null;
+    let createFunc: (date: moment.Moment) => Promise<TFile>;
+    
+    // Granularity별로 존재 여부 확인 및 생성 함수 선택
+    switch (granularity) {
+        case 'daily':
+            const allDailyNotes = getAllDailyNotes();
+            existingFile = getDailyNote(today, allDailyNotes);
+            createFunc = createDailyNote;
+            break;
+        case 'weekly':
+            const allWeeklyNotes = getAllWeeklyNotes();
+            existingFile = getWeeklyNote(today, allWeeklyNotes);
+            createFunc = createWeeklyNote;
+            break;
+        case 'monthly':
+            const allMonthlyNotes = getAllMonthlyNotes();
+            existingFile = getMonthlyNote(today, allMonthlyNotes);
+            createFunc = createMonthlyNote;
+            break;
+        case 'quarterly':
+            const allQuarterlyNotes = getAllQuarterlyNotes();
+            existingFile = getQuarterlyNote(today, allQuarterlyNotes);
+            createFunc = createQuarterlyNote;
+            break;
+        case 'yearly':
+            const allYearlyNotes = getAllYearlyNotes();
+            existingFile = getYearlyNote(today, allYearlyNotes);
+            createFunc = createYearlyNote;
+            break;
+        default:
+            return null;
+    }
+    
+        // 이미 존재하면 반환
+        if (existingFile) {
+            return existingFile;
+        }
+    
+        // 파일 생성
+        const file = await createFunc(today);
+    
+        if (file) {
+            return file;
+        }
+        
+        return null;
+    
+    } catch (error) {
+        return null;
+    }
+}
+
+/**
+ * 오늘의 Daily Note 생성 (레거시 호환용)
+ * @deprecated createJournalNote('day')를 사용하세요
+ */
+export async function createTodayDailyNote(): Promise<TFile | null> {
+	return createJournalNote('daily');
+}
+
+/**
+ * Daily Note의 task 상태를 카운팅합니다.
+ * @param app - Obsidian App 인스턴스
+ * @returns { incomplete, completed } 미완료/완료 task 개수, Daily Notes 없으면 null
+ */
+export async function getDailyNoteTaskCount(app: App): Promise<{ incomplete: number; completed: number } | null> {
+	// Daily Notes가 활성화되어 있는지 확인
+	if (!appHasDailyNotesPluginLoaded()) {
+		return null;
+	}
+	
+	try {
+		// 오늘의 Daily Note 경로 가져오기
+		const todayPath = getJournalNotePath('daily');
+		const file = app.vault.getAbstractFileByPath(todayPath);
+		
+		// 파일이 없으면 null 반환
+		if (!(file instanceof TFile)) {
+			return null;
+		}
+		
+		// 파일 내용 읽기
+		const content = await app.vault.read(file);
+		
+		// 미완료 task 카운팅 (들여쓰기 포함: ^\s*- [ ])
+		const incompleteTasks = (content.match(/^\s*- \[ \]/gm) || []).length;
+		
+		// 완료된 task 카운팅 (들여쓰기 포함: ^\s*- [x] 또는 - [X])
+		const completedTasks = (content.match(/^\s*- \[x\]/gmi) || []).length;
+		
+		return {
+			incomplete: incompleteTasks,
+			completed: completedTasks
+		};
+		
+	} catch (error) {
+		console.error('[Synaptic View] Daily Note task 카운팅 실패:', error);
+		return null;
+	}
+}
+
+

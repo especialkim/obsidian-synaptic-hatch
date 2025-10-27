@@ -29,9 +29,9 @@ export interface AlwaysOnTopSettings {
 	mainIndicatorIconSize: number;
 	popoutIndicatorSize: number;
 	popoutIndicatorIconSize: number;
+	useCustomPopoutCommands: boolean;
 	customPopoutCommands: CustomPopoutCommand[];
 	dateFormat: string;
-	timeFormat: string;
 }
 
 export const DEFAULT_SETTINGS: AlwaysOnTopSettings = {
@@ -45,9 +45,9 @@ export const DEFAULT_SETTINGS: AlwaysOnTopSettings = {
 	mainIndicatorIconSize: 15,
 	popoutIndicatorSize: 30,
 	popoutIndicatorIconSize: 15,
+	useCustomPopoutCommands: false,
 	customPopoutCommands: [],
 	dateFormat: 'YYYY-MM-DD',
-	timeFormat: 'HH:mm',
 };
 
 export async function loadPluginSettings(plugin: Plugin): Promise<AlwaysOnTopSettings> {
