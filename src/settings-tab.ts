@@ -5,7 +5,15 @@ import { Notice } from 'obsidian';
 import type { App } from 'obsidian';
 import { registerCustomCommand, removeCustomCommand } from './commands';
 import { getAvailableGranularities, isJournalAvailable } from './utils/journalUtils';
-import { getCustomCommandURI, getFileNameOfPath, getFolderNameOfPath } from './utils/pathUtils';
+import { 
+	getCustomCommandURI, 
+	getFileNameOfPath, 
+	getFolderNameOfPath,
+	isFileExists,
+	isFolderExists,
+	hasInvalidFileNameCharacters,
+	resolveFileNameRule
+} from './utils/pathUtils';
 
 enum CustomCommandType {
 	BLANK = 'blank',
@@ -137,9 +145,9 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 					const newCommand: CustomPopoutCommand = {
 						id: `custom-popout-${Date.now()}`,
 						name: '',
-						type: 'blank',
 						enabled: false,
 						config: {},
+						type: 'file',
 					};
 					this.plugin.settings.customPopoutCommands.push(newCommand);
 					await this.plugin.persistSettings();
@@ -184,14 +192,15 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 
 		new Setting(type)
 			.addDropdown((dropdown) => {
-				dropdown.addOption('blank', 'blank');
-				dropdown.addOption('file', 'file');
-				dropdown.addOption('folder', 'folder');
+				// type이 미정일 때만 선택 프롬프트 표시 (짧게)
+				dropdown.addOption('blank', 'Blank');
+				dropdown.addOption('file', 'File');
+				dropdown.addOption('folder', 'Folder');
 
 				if(isJournalAvailable()){
-					dropdown.addOption('journal', 'journal');
+					dropdown.addOption('journal', 'Journal');
 				}
-				dropdown.setValue(cmd.type);
+				dropdown.setValue(cmd.type || '');
 				dropdown.onChange(async (value) => {
 					cmd.type = value as PopoutCommandType;
 					cmd.config = {};
@@ -201,19 +210,35 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 				});
 			});
 
-		this.renderCustomCommandOptions(options, cmd.type as PopoutCommandType, cmd, enable);
+		if (cmd.type) {
+			this.renderCustomCommandOptions(options, cmd.type, cmd, enable);
+		}
 		
 		new Setting(enable)
 		.addToggle((toggle) => {
 			toggle.setValue(cmd.enabled);
 			toggle.onChange(async (value) => {
-				cmd.enabled = value;
-				this.renderCustomCommandsSectionContent(customCommandsSectionContent);
-				this.setNameOfCustomPopoutCommand(cmd);
-				await this.plugin.persistSettings();
 				if(value){
+					// Enable 시도: 먼저 유효성 검사
+					const validationError = this.validateCustomCommandOptions(cmd);
+					if (validationError) {
+						// 유효성 검사 실패: disable 상태로 유지
+						new Notice(validationError);
+						this.disableCustomCommandItem(enable, cmd);
+						return;
+					}
+					// 유효성 검사 성공: enable
+					cmd.enabled = true;
+					this.renderCustomCommandsSectionContent(customCommandsSectionContent);
+					this.setNameOfCustomPopoutCommand(cmd);
+					await this.plugin.persistSettings();
 					registerCustomCommand(this.plugin, cmd, this.plugin.popouts);
 				}else{
+					// Disable
+					cmd.enabled = false;
+					this.renderCustomCommandsSectionContent(customCommandsSectionContent);
+					this.setNameOfCustomPopoutCommand(cmd);
+					await this.plugin.persistSettings();
 					removeCustomCommand(this.plugin, cmd);
 				}
 			});
@@ -402,7 +427,7 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 		if(type === CustomCommandType.BLANK){
 			new Setting(options)
 				.addText((text) => {
-					text.setPlaceholder('세부 설정이 없습니다');
+					text.setPlaceholder('Open a new blank Always-on-Top Popout Window');
 					text.setDisabled(true);
 				})
 				.settingEl.addClass('is-disabled');
@@ -411,8 +436,9 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 		if(type === CustomCommandType.FILE){
 			new Setting(options)
 				.addText((text) => {
-					text.setPlaceholder('path/to/file.md');
+					text.setPlaceholder('Enter a file path');
 					text.setValue(cmd.config.filePath || '');
+					// text.inputEl.dataset.tooltip = 'Enter a file path';
 					text.onChange(async (value) => {
 						cmd.config.filePath = value;
 						cmd.enabled = false;
@@ -425,8 +451,9 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 		if(type === CustomCommandType.FOLDER){
 			new Setting(options)
 					.addText((text) => {
-						text.setPlaceholder('path/to/folder');
+						text.setPlaceholder('Enter a folder path');
 						text.setValue(cmd.config.folderPath || '');
+						// text.inputEl.dataset.tooltip = 'Enter a folder path';
 						text.onChange(async (value) => {
 							cmd.config.folderPath = value;
 							cmd.enabled = false;
@@ -437,8 +464,9 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 	
 				new Setting(options)
 					.addText((text) => {
-						text.setPlaceholder('File {{date}}');
+						text.setPlaceholder('Filename rule ({{date}} optional');
 						text.setValue(cmd.config.fileNameRule || '');
+						// text.inputEl.dataset.tooltip = 'Enter a file name rule';
 						text.onChange(async (value) => {
 							cmd.config.fileNameRule = value;
 							cmd.enabled = false;
@@ -449,8 +477,9 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 	
 				new Setting(options)
 					.addText((text) => {
-						text.setPlaceholder('Template (optional)');
+						text.setPlaceholder('Enter a template file path');
 						text.setValue(cmd.config.templatePath || '');
+						text.inputEl.dataset.tooltip = 'Enter a template file path';
 						text.onChange(async (value) => {
 							cmd.config.templatePath = value;
 							cmd.enabled = false;
@@ -469,7 +498,12 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 				availableGranularities.forEach((granularity) => {
 					dropdown.addOption(granularity, granularity);
 				});
-				dropdown.setValue(cmd.config.journalPeriod || availableGranularities[0]);
+				if(cmd.config.journalPeriod){
+					dropdown.setValue(cmd.config.journalPeriod);
+				}else{
+					dropdown.setValue(availableGranularities[0]);
+					cmd.config.journalPeriod = availableGranularities[0];
+				}
 				dropdown.onChange(async (value) => {
 					cmd.config.journalPeriod = value as JournalPeriod;
 					cmd.enabled = false;
@@ -489,12 +523,27 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 				cmd.enabled = false;
 				void this.plugin.persistSettings();
 				toggle.onChange(async (value) => {
-					cmd.enabled = value;
-					await this.setNameOfCustomPopoutCommand(cmd);
-					await this.plugin.persistSettings();
 					if(value){
+						// Enable 시도: 먼저 유효성 검사
+						const validationError = this.validateCustomCommandOptions(cmd);
+						if (validationError) {
+							// 유효성 검사 실패: disable 상태로 유지
+							new Notice(validationError);
+							toggle.setValue(false);
+							cmd.enabled = false;
+							await this.plugin.persistSettings();
+							return;
+						}
+						// 유효성 검사 성공: enable
+						cmd.enabled = true;
+						await this.setNameOfCustomPopoutCommand(cmd);
+						await this.plugin.persistSettings();
 						registerCustomCommand(this.plugin, cmd, this.plugin.popouts);
 					}else{
+						// Disable
+						cmd.enabled = false;
+						await this.setNameOfCustomPopoutCommand(cmd);
+						await this.plugin.persistSettings();
 						removeCustomCommand(this.plugin, cmd);
 					}
 				});
@@ -522,5 +571,59 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 				customCommand.name = `Custom Popout> Open <${subType}> journal in an Always-on-Top Popout Window`;
 				break;
 		}
+	}
+
+	/**
+	 * 커스텀 명령 옵션의 유효성을 검사
+	 * @returns 유효하면 null, 문제가 있으면 에러 메시지 반환
+	 */
+	private validateCustomCommandOptions(cmd: CustomPopoutCommand): string | null {
+
+		if(cmd.type === CustomCommandType.FILE){
+			const filePath = cmd.config.filePath;
+			
+			if (!filePath) {
+				return 'File path is required.';
+			}
+
+			if (!isFileExists(this.plugin, filePath)) {
+				return `File does not exist: ${filePath}`;
+			}
+		}
+
+		if(cmd.type === CustomCommandType.FOLDER){
+			const folderPath = cmd.config.folderPath || '';
+			const fileNameRule = cmd.config.fileNameRule;
+			const templatePath = cmd.config.templatePath || '';
+			
+			// 폴더 경로 검증
+			if (folderPath && !isFolderExists(this.plugin, folderPath)) {
+				return `Folder does not exist: ${folderPath}`;
+			}
+
+			// 파일명 규칙 검증
+			if (!fileNameRule) {
+				return 'File name rule is required.';
+			}
+
+			// 날짜 치환 후 파일명 검증
+			const resolvedFileName = resolveFileNameRule(fileNameRule, this.plugin.settings.dateFormat);
+			
+			if (hasInvalidFileNameCharacters(resolvedFileName)) {
+				return `Invalid characters in file name: ${resolvedFileName}`;
+			}
+
+			// 템플릿 경로 검증
+			if (templatePath && !isFileExists(this.plugin, templatePath)) {
+				return `Template file does not exist: ${templatePath}`;
+			}
+		}
+
+		if(cmd.type === CustomCommandType.JOURNAL){
+			// Journal은 플러그인 설정에 의존하므로 별도 검증 불필요
+			// isJournalAvailable()로 이미 체크됨
+		}
+
+		return null; // 유효함
 	}
 }

@@ -13,6 +13,7 @@ import type { IndicatorManager } from '../indicator-manager';
 import { markPopupDocument } from './document-marker';
 import { CustomPopoutCommand } from 'src/settings';
 import { createJournalNote } from '../utils/journalUtils';
+import { moment } from 'obsidian';
 
 
 export interface PendingPopupInfo {
@@ -137,6 +138,61 @@ export class PopoutManager {
 			}
 			return;
 		}
+
+	if(cmd.type === 'folder'){
+		const folderPath = cmd.config.folderPath || '';
+		const fileNameRule = cmd.config.fileNameRule || '';
+		const templatePath = cmd.config.templatePath || '';
+		const date = moment().format(this.plugin.settings.dateFormat);
+		const hasDateFormat = fileNameRule.includes('{{Date}}') || fileNameRule.includes('{{date}}');
+		let fileName = hasDateFormat ? fileNameRule.replace('{{Date}}', date).replace('{{date}}', date) : fileNameRule;
+
+		// 확장자 처리: 확장자가 없으면 .md 추가
+		if (!fileName.includes('.')) {
+			fileName = `${fileName}.md`;
+		}
+
+		try {
+			// 폴더가 존재하는지 확인하고 없으면 생성
+			if (folderPath) {
+				await this.ensureFolderExists(folderPath);
+			}
+
+			// 파일 경로 생성 (folderPath가 빈 문자열이면 최상위 폴더)
+			const fullPath = folderPath ? `${folderPath}/${fileName}` : fileName;
+			
+			// 파일 존재 여부 확인
+			let fileToOpen: TFile | null = null;
+			const existingFile = this.plugin.app.vault.getAbstractFileByPath(fullPath);
+			
+			if (existingFile instanceof TFile) {
+				// 파일이 이미 존재
+				if (hasDateFormat) {
+					// 날짜 포맷이 있으면 기존 파일 열기
+					fileToOpen = existingFile;
+				} else {
+					// 날짜 포맷이 없으면 새 파일명 생성 (숫자 추가)
+					fileToOpen = await this.createUniqueFile(folderPath, fileName, templatePath);
+				}
+			} else {
+				// 파일이 없으면 새로 생성
+				fileToOpen = await this.createNewFile(fullPath, templatePath);
+			}
+
+			if (fileToOpen) {
+				const popoutLeaf = this.plugin.app.workspace.openPopoutLeaf();
+				popoutLeaf.openFile(fileToOpen).catch((error) => {
+					console.error('Always On Top plugin: failed to open file in pop-out window.', error);
+				});
+			} else {
+				new Notice('Failed to create or open file.');
+			}
+		} catch (error) {
+			console.error('Always On Top plugin: error in folder command:', error);
+			new Notice('Error creating or opening file.');
+		}
+		return;
+	}
 		
 	}
 
@@ -278,4 +334,70 @@ export class PopoutManager {
 		}
 		return null;
 	}
+
+	/**
+	 * 폴더가 존재하는지 확인하고 없으면 생성
+	 */
+	private async ensureFolderExists(folderPath: string): Promise<void> {
+		const folder = this.plugin.app.vault.getAbstractFileByPath(folderPath);
+		if (!folder) {
+			// 폴더가 없으면 생성
+			await this.plugin.app.vault.createFolder(folderPath);
+		}
+	}
+
+	/**
+	 * 새 파일 생성 (템플릿 적용)
+	 */
+	private async createNewFile(filePath: string, templatePath: string): Promise<TFile | null> {
+		try {
+			let content = '';
+			
+			// 템플릿이 있으면 읽어오기
+			if (templatePath) {
+				const templateFile = this.plugin.app.vault.getAbstractFileByPath(templatePath);
+				if (templateFile instanceof TFile) {
+					content = await this.plugin.app.vault.read(templateFile);
+				}
+			}
+			
+			// 파일 생성
+			const file = await this.plugin.app.vault.create(filePath, content);
+			return file;
+		} catch (error) {
+			console.error('Always On Top plugin: failed to create file:', error);
+			return null;
+		}
+	}
+
+	/**
+	 * 중복되지 않는 파일명으로 파일 생성 (숫자 추가)
+	 */
+	private async createUniqueFile(folderPath: string, baseFileName: string, templatePath: string): Promise<TFile | null> {
+		try {
+			// 파일명과 확장자 분리
+			const lastDotIndex = baseFileName.lastIndexOf('.');
+			const nameWithoutExt = lastDotIndex > 0 ? baseFileName.substring(0, lastDotIndex) : baseFileName;
+			const ext = lastDotIndex > 0 ? baseFileName.substring(lastDotIndex) : '.md';
+			
+			// 중복되지 않는 파일명 찾기
+			let counter = 1;
+			let uniquePath = '';
+			let existingFile = null;
+			
+			do {
+				const uniqueFileName = `${nameWithoutExt} ${counter}${ext}`;
+				uniquePath = folderPath ? `${folderPath}/${uniqueFileName}` : uniqueFileName;
+				existingFile = this.plugin.app.vault.getAbstractFileByPath(uniquePath);
+				counter++;
+			} while (existingFile instanceof TFile);
+			
+			// 파일 생성
+			return await this.createNewFile(uniquePath, templatePath);
+		} catch (error) {
+			console.error('Always On Top plugin: failed to create unique file:', error);
+			return null;
+		}
+	}
+
 }

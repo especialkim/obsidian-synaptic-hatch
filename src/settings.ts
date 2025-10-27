@@ -6,7 +6,7 @@ export type JournalPeriod = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'year
 export interface CustomPopoutCommand {
 	id: string;
 	name: string;
-	type: PopoutCommandType;
+	type?: PopoutCommandType;
 	enabled: boolean;
 	config: {
 		filePath?: string;

@@ -6,27 +6,12 @@ import { AlwaysOnTopSettingTab } from './src/settings-tab';
 import { AlwaysOnTopSettings, loadPluginSettings, savePluginSettings } from './src/settings';
 import { executeToggleWindowPin } from './src/commands/toggle-window-pin';
 
-
-import { getAvailableGranularities, isJournalAvailable } from './src/utils/journalUtils';
-
-
 export default class AlwaysOnTopPlugin extends Plugin {
 	settings: AlwaysOnTopSettings;
 	private indicators!: IndicatorManager;
 	public popouts!: PopoutManager;
 
 	async onload() {
-
-		/* Test */
-
-		// isJournalAvailable
-		console.log('isJournalAvailable', isJournalAvailable());
-
-		// getAvailableGranularities
-		console.log('getAvailableGranularities', getAvailableGranularities());
-
-		/* Test End */
-
 
 		this.settings = await loadPluginSettings(this);
 

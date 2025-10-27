@@ -104,6 +104,10 @@
     max-width: initial;
 }
 
+.synaptic-hatch-custom-command-item-options .setting-item-control input:disabled {
+    background-color: var(--background-secondary);
+}
+
 .synaptic-hatch-custom-command-item {
     display: flex;
     align-items: center;
