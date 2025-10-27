@@ -26,7 +26,7 @@ import {
 	getQuarterlyNoteSettings,
 	getYearlyNoteSettings
 } from 'obsidian-daily-notes-interface';
-import { JournalPeriod } from '../settings';
+import { JournalPeriod } from '../setting/settings';
 
 /**
  * 특정 플러그인이 설치되고 활성화되어 있는지 확인

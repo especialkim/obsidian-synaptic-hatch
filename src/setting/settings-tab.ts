@@ -1,10 +1,10 @@
 import { PluginSettingTab, Setting, setIcon } from 'obsidian';
-import type AlwaysOnTopPlugin from '../main';
+import type AlwaysOnTopPlugin from '../../main';
 import type { CustomPopoutCommand, PopoutCommandType, JournalPeriod } from './settings';
 import { Notice } from 'obsidian';
 import type { App } from 'obsidian';
-import { registerCustomCommand, removeCustomCommand } from './commands';
-import { getAvailableGranularities, isJournalAvailable } from './utils/journalUtils';
+import { registerCustomCommand, removeCustomCommand } from '../commands';
+import { getAvailableGranularities, isJournalAvailable } from '../utils/journalUtils';
 import { 
 	getCustomCommandURI, 
 	getFileNameOfPath, 
@@ -13,7 +13,7 @@ import {
 	isFolderExists,
 	hasInvalidFileNameCharacters,
 	resolveFileNameRule
-} from './utils/pathUtils';
+} from '../utils/pathUtils';
 
 enum CustomCommandType {
 	BLANK = 'blank',

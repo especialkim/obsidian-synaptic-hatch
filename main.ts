@@ -2,8 +2,8 @@ import { Plugin, WorkspaceWindow } from 'obsidian';
 import { IndicatorManager } from './src/indicator-manager';
 import { PopoutManager } from './src/popout/popout-manager';
 import { registerCommands } from './src/commands';
-import { AlwaysOnTopSettingTab } from './src/settings-tab';
-import { AlwaysOnTopSettings, loadPluginSettings, savePluginSettings } from './src/settings';
+import { AlwaysOnTopSettingTab } from './src/setting/settings-tab';
+import { AlwaysOnTopSettings, loadPluginSettings, savePluginSettings } from './src/setting/settings';
 import { executeToggleWindowPin } from './src/commands/toggle-window-pin';
 
 export default class AlwaysOnTopPlugin extends Plugin {

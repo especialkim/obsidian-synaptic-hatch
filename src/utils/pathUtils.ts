@@ -1,5 +1,5 @@
 import type AlwaysOnTopPlugin from '../../main';
-import type { CustomPopoutCommand } from '../settings';
+import type { CustomPopoutCommand } from '../setting/settings';
 import { TFile, TFolder, moment } from 'obsidian';
 
 export function getFileNameOfPath(path: string){

@@ -1,5 +1,5 @@
 import type AlwaysOnTopPlugin from '../../main';
-import { CustomPopoutCommand, PopoutCommandType } from 'src/settings';
+import { CustomPopoutCommand, PopoutCommandType } from 'src/setting/settings';
 import { Notice } from 'obsidian';
 import type { PopoutManager } from '../popout/popout-manager';
 

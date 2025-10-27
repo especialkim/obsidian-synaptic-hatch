@@ -3,7 +3,7 @@ import type { IndicatorManager } from '../indicator-manager';
 import type { PopoutManager } from '../popout/popout-manager';
 import { registerToggleWindowPinCommand } from './toggle-window-pin';
 import { registerOpenAlwaysOnTopPopoutCommand } from './open-always-on-top-popout';
-import { CustomPopoutCommand } from 'src/settings';
+import { CustomPopoutCommand } from 'src/setting/settings';
 import { Notice } from 'obsidian';
 import { registerCustomPopoutCommands, registerCustomPopoutCommand, removeCustomPopoutCommand } from './custom-popout';
 

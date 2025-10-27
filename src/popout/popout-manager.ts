@@ -11,7 +11,7 @@ import {
 import type AlwaysOnTopPlugin from '../../main';
 import type { IndicatorManager } from '../indicator-manager';
 import { markPopupDocument } from './document-marker';
-import { CustomPopoutCommand } from 'src/settings';
+import { CustomPopoutCommand } from 'src/setting/settings';
 import { createJournalNote } from '../utils/journalUtils';
 import { moment } from 'obsidian';
 
