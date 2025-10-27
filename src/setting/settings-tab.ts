@@ -14,6 +14,8 @@ import {
 	hasInvalidFileNameCharacters,
 	resolveFileNameRule
 } from '../utils/pathUtils';
+import { FileSuggest } from '../suggest/FileSuggest';
+import { FolderSuggest } from '../suggest/FolderSuggest';
 
 enum CustomCommandType {
 	BLANK = 'blank',
@@ -433,34 +435,38 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 				.settingEl.addClass('is-disabled');
 		}
 		
-		if(type === CustomCommandType.FILE){
-			new Setting(options)
+	if(type === CustomCommandType.FILE){
+		new Setting(options)
+			.addText((text) => {
+				text.setPlaceholder('Enter a file path');
+				text.setValue(cmd.config.filePath || '');
+				// text.inputEl.dataset.tooltip = 'Enter a file path';
+				text.onChange(async (value) => {
+					cmd.config.filePath = value;
+					cmd.enabled = false;
+					await this.plugin.persistSettings();
+					this.disableCustomCommandItem(enable, cmd);
+				});
+				// FileSuggest 추가
+				new FileSuggest(this.app, text.inputEl, this.plugin);
+			});
+	}
+
+	if(type === CustomCommandType.FOLDER){
+		new Setting(options)
 				.addText((text) => {
-					text.setPlaceholder('Enter a file path');
-					text.setValue(cmd.config.filePath || '');
-					// text.inputEl.dataset.tooltip = 'Enter a file path';
+					text.setPlaceholder('Enter a folder path');
+					text.setValue(cmd.config.folderPath || '');
+					// text.inputEl.dataset.tooltip = 'Enter a folder path';
 					text.onChange(async (value) => {
-						cmd.config.filePath = value;
+						cmd.config.folderPath = value;
 						cmd.enabled = false;
 						await this.plugin.persistSettings();
 						this.disableCustomCommandItem(enable, cmd);
 					});
+					// FolderSuggest 추가
+					new FolderSuggest(this.app, text.inputEl, this.plugin);
 				});
-		}
-
-		if(type === CustomCommandType.FOLDER){
-			new Setting(options)
-					.addText((text) => {
-						text.setPlaceholder('Enter a folder path');
-						text.setValue(cmd.config.folderPath || '');
-						// text.inputEl.dataset.tooltip = 'Enter a folder path';
-						text.onChange(async (value) => {
-							cmd.config.folderPath = value;
-							cmd.enabled = false;
-							await this.plugin.persistSettings();
-							this.disableCustomCommandItem(enable, cmd);
-						});
-					});
 	
 				new Setting(options)
 					.addText((text) => {
@@ -475,18 +481,20 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 						});
 					});
 	
-				new Setting(options)
-					.addText((text) => {
-						text.setPlaceholder('Enter a template file path');
-						text.setValue(cmd.config.templatePath || '');
-						text.inputEl.dataset.tooltip = 'Enter a template file path';
-						text.onChange(async (value) => {
-							cmd.config.templatePath = value;
-							cmd.enabled = false;
-							await this.plugin.persistSettings();
-							this.disableCustomCommandItem(enable, cmd);
-						});
+			new Setting(options)
+				.addText((text) => {
+					text.setPlaceholder('Enter a template file path');
+					text.setValue(cmd.config.templatePath || '');
+					text.inputEl.dataset.tooltip = 'Enter a template file path';
+					text.onChange(async (value) => {
+						cmd.config.templatePath = value;
+						cmd.enabled = false;
+						await this.plugin.persistSettings();
+						this.disableCustomCommandItem(enable, cmd);
 					});
+					// FileSuggest 추가
+					new FileSuggest(this.app, text.inputEl, this.plugin);
+				});
 		}
 
 		if(type === CustomCommandType.JOURNAL){
