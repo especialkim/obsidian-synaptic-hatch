@@ -588,19 +588,19 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 	
 		switch(type){
 			case 'blank':
-				customCommand.name = 'Custom Popout> Open a new blank Always-on-Top Popout Window';
+				customCommand.name = 'Custom Popout, Open a new blank Always-on-Top Popout Window';
 				break;
 			case 'file':
 				const fileName = getFileNameOfPath(customCommand.config.filePath || '');
-				customCommand.name = `Custom Popout> Open <${fileName}> in an Always-on-Top Popout Window`;
+				customCommand.name = `Custom Popout, Open <${fileName}> in an Always-on-Top Popout Window`;
 				break;
 			case 'folder':
 				const folder = getFolderNameOfPath(customCommand.config.folderPath || '');
-				customCommand.name = `Custom Popout> Create a new note in <${folder}> and open it in an Always-on-Top Popout Window`;
+				customCommand.name = `Custom Popout, Create a new note in <${folder}> and open it in an Always-on-Top Popout Window`;
 				break;
 			case 'journal':
 				const subType = customCommand.config.journalPeriod || 'daily';
-				customCommand.name = `Custom Popout> Open <${subType}> journal in an Always-on-Top Popout Window`;
+				customCommand.name = `Custom Popout, Open <${subType}> journal in an Always-on-Top Popout Window`;
 				break;
 		}
 	}

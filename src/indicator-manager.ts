@@ -1,9 +1,15 @@
-import { Workspace } from 'obsidian';
+import { Workspace, WorkspaceLeaf, setIcon } from 'obsidian';
 import { isWindowPinned } from './electron';
 import type AlwaysOnTopPlugin from '../main';
 
 type IndicatorMap = Map<Document, HTMLElement>;
 type PinStateMap = Map<Document, boolean>;
+
+interface LeafView {
+	view?: {
+		containerEl?: HTMLElement;
+	};
+}
 
 export class IndicatorManager {
 	private readonly pinIndicators: IndicatorMap = new Map();
@@ -77,8 +83,9 @@ export class IndicatorManager {
 		this.addIndicatorToWindow(document);
 
 		const workspace: Workspace = this.plugin.app.workspace;
-		workspace.iterateAllLeaves((leaf) => {
-			const win = (leaf as any).view?.containerEl?.ownerDocument;
+		workspace.iterateAllLeaves((leaf: WorkspaceLeaf) => {
+			const leafWithView = leaf as WorkspaceLeaf & LeafView;
+			const win = leafWithView.view?.containerEl?.ownerDocument;
 			if (win && win !== document) {
 				this.addIndicatorToWindow(win);
 			}
@@ -114,12 +121,9 @@ export class IndicatorManager {
 		const indicator = doc.body.createDiv('always-on-top-indicator');
 		indicator.addClass(isMainWindow ? 'always-on-top-indicator--main' : 'always-on-top-indicator--popout');
 		indicator.setAttribute('aria-label', 'Toggle always on top');
-		indicator.innerHTML = `
-			<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-				<path d="M12 17v5"/>
-				<path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1v3.76"/>
-			</svg>
-		`;
+		
+		// Obsidian의 내장 pin 아이콘 사용
+		setIcon(indicator, 'pin');
 
 		indicator.addEventListener('click', () => {
 			if (doc.defaultView) {

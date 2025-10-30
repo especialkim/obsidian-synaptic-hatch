@@ -14,7 +14,6 @@ export function registerCustomPopoutCommands(plugin: AlwaysOnTopPlugin, popouts:
     });
 
     plugin.registerObsidianProtocolHandler('custom-popout', async (params) => {
-        console.log('custom-popout', params);
         const { vault, id } = params;
 
         if(vault !== plugin.app.vault.getName() || !id){

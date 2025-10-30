@@ -41,8 +41,13 @@ interface PeriodicNoteSettings {
 	template?: string;
 }
 
+interface AppPlugins {
+	enabledPlugins?: Set<string> | string[];
+	plugins?: Record<string, unknown>;
+}
+
 export function isPluginEnabled(app: App, pluginId: string): boolean {
-	const plugins = (app as any).plugins;
+	const plugins = (app as App & { plugins: AppPlugins }).plugins;
 	
 	if (!plugins) {
 		return false;
