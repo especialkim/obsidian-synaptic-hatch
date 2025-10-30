@@ -114,7 +114,6 @@ export class PopoutManager {
 		}
 
 		if(cmd.type === 'blank'){
-			console.log('blank', cmd);
 			this.plugin.app.workspace.openPopoutLeaf();
 			return;
 		}
