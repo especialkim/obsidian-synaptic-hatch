@@ -3,7 +3,7 @@
 	"name": "Synaptic Hatch",
 	"version": "0.1.0",
 	"minAppVersion": "0.15.0",
-	"description": "Always-on-Top pin for Obsidian — your quick memo portal beyond the app.",
+	"description": "Always-on-Top pin, your quick memo portal beyond the app.",
 	"author": "Yongmini",
 	"authorUrl": "https://x.com/Facilitate4U",
 	"isDesktopOnly": true

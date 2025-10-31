@@ -1,7 +1,7 @@
 {
 	"name": "synaptic-hatch",
 	"version": "0.1.0",
-	"description": "Always-on-Top pin for Obsidian — your quick memo portal beyond the app.",
+	"description": "Always-on-Top pin, your quick memo portal beyond the app.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
