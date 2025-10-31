@@ -178,6 +178,13 @@ Whenever Obsidian’s **Daily Notes** core plugin, the **Calendar** community pl
 4. Search for **“Synaptic Hatch.”**
 5. Install and enable the plugin.
 
+### Manual install
+1. Go to the GitHub repository  
+   https://github.com/especialkim/obsidian-synaptic-hatch
+2. Open the **Releases** tab and download the latest ZIP file
+3. Unzip and place the folder in your Obsidian plugins `<vault>/.obsidian/plugins/`
+4. Restart Obsidian and enable **Synaptic Hatch** in plugin settings
+
 ---
 
 ## 🤝 Contributing

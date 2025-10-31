@@ -212,10 +212,7 @@ Obsidian의 경계를 넘어, 가장 중요한 노트를 항상 당신 곁에 �
 1. 아래 GitHub 저장소로 이동합니다  
    https://github.com/especialkim/obsidian-synaptic-hatch
 2. **Releases** 탭에서 최신 버전의 ZIP 파일을 다운로드합니다
-3. 압축을 풀고 `obsidian-synaptic-hatch` 폴더를 다음 경로에 복사합니다  
-   - macOS: `~/Library/Application Support/obsidian/plugins/`  
-   - Windows: `%APPDATA%\Obsidian\plugins\`  
-   - Linux: `~/.config/Obsidian/plugins/`
+3. 압축을 풀고 `obsidian-synaptic-hatch` 폴더를 옵시디언 플러그인 경로 ``<vault>/.obsidian/plugins/`에 복사합니다  
 4. Obsidian을 재실행한 뒤  
    `설정 → 커뮤니티 플러그인`에서 **Synaptic Hatch**를 활성화합니다
 
