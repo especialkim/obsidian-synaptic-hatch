@@ -43,5 +43,7 @@ export function registerCustomPopoutCommand(plugin: AlwaysOnTopPlugin, popouts: 
 }
 
 export function removeCustomPopoutCommand(plugin: AlwaysOnTopPlugin, customCommand: CustomPopoutCommand){
-    plugin.removeCommand(customCommand.id);
+    const commandId = `${plugin.manifest.id}:${customCommand.id}`;
+    const commands = (plugin.app as { commands?: { removeCommand: (id: string) => void } }).commands;
+    commands?.removeCommand(commandId);
 }

@@ -1,55 +1,204 @@
-# Snaptic Hatch
+> Korean version: [README_KO.md](README_KO.md)
 
-Snaptic Hatch(커뮤니티 목록에서는 **Synaptic Hatch**로 표시됨)는 Obsidian 데스크톱 창을 자유롭게 고정(Always-on-Top)하고, 언제든지 꺼내 쓰는 팝아웃 노트를 제공하는 플러그인입니다. 메인 앱 위를 가리지 않고 빠르게 메모하거나, 외부 앱을 사용하면서도 Obsidian 노트를 항상 곁에 둘 수 있습니다.
+# Synaptic Hatch
 
-## 핵심 기능
-- **창 고정 토글**: 현재 활성화된 Obsidian 창을 항상 위/해제 상태로 전환합니다.
-- **팝아웃 노트**: 현재 열어둔 노트를 별도 창으로 띄우고 자동으로 Always-on-Top으로 유지합니다.
-- **퀵 메모 모드**: 메인 창을 자동으로 뒤로 보내고, 메모 창만 위에 남겨 외부 앱 사용 중에도 메모가 가능합니다.
-- **핀 표시기**: 창 오른쪽 상단에 고정 상태를 알려주는 아이콘을 표시합니다(위치 조정 가능).
+**A little portal that keeps the note you need right on top.**  
+Synaptic Hatch lets any Obsidian window float above the rest, so you can jot thoughts, consult references, or run meetings without shuffling windows. Keep your favorite note in sight while you code, browse, or present.
 
-## 사용 방법
-- `Toggle Window Pin for Always on Top`  
-  커맨드 팔레트 또는 단축키로 실행하면 현재 창의 고정 상태를 전환합니다. 표시기가 활성화되어 있다면 색상으로 고정 여부를 바로 확인할 수 있습니다.
+> ⚠️ **Desktop only.** The plugin relies on Electron window controls and works on Windows, macOS, and Linux.
 
-- `Open Always-On-Top Popout`  
-  지금 보고 있는 노트를 팝아웃 창으로 열고 즉시 Always-on-Top으로 고정합니다. 주로 두 번째 화면이나 참고용 창이 필요할 때 활용하세요.
+---
 
-- `Open Always-On-Top Popout For Quick Note`  
-  메인 Obsidian 창을 자동으로 배경으로 보내고, 팝아웃 창만 전면에 두는 퀵 메모 모드입니다. 외부 앱을 쓰면서 빠르게 필기할 때 유용합니다.
+## ✨ Who Is It For?
 
-### 외부에서 퀵 메모 불러오기
-이 플러그인은 Obsidian URI 핸들러를 등록합니다.
+**Light users**
+- Hold meeting notes in view during calls.
+- Pin a reference document over other apps.
+- Park a vault dashboard on your second monitor.
 
+**Power users**
+- Trigger project dashboards from Raycast or Alfred.
+- Open today’s daily note with a single hotkey every morning.
+- Spin up dedicated quick-note popouts for each project.
+
+---
+
+## 🎯 Key Features
+
+### Core
+- **Toggle window pin:** Flip the active Obsidian window between Always-on-Top and normal with one command or hotkey.
+- **Instant popout:** Lift the current tab into its own Always-on-Top window on demand.
+- **Background mode:** Push the main window to the back while keeping the popout focused.
+- **Pin indicator:** A small pin icon (📌) shows which windows are currently pinned; position and size are configurable.
+
+### For power users
+- **Custom popout commands:** Create commands that open specific files, spawn fresh notes in folders, or launch periodic journals.
+- **Obsidian URI support:** Invoke popouts from automation tools with `obsidian://custom-popout` links.
+- **Periodic note integration:** Works with Daily Notes, Calendar (weekly), Periodic Notes, and similar workflows.
+
+---
+
+## 🚀 Quick Start
+
+### Step 1 — Learn the basics
+
+#### Pin the current window
+1. Press `Ctrl/Cmd + P` to open the command palette.
+2. Run **“Toggle window pin.”**
+3. The window jumps to Always-on-Top (run again to unpin).
+
+**Or** click the 📌 indicator in the top-right corner (when enabled) to toggle pinning.
+
+#### Pop out the active note
+1. Press `Ctrl/Cmd + P`.
+2. Run **“Open in new Always-on-Top popout window.”**
+3. The current note appears in a popout that stays above other apps.
+
+> 💡 **Tip:** Assign hotkeys under **Settings → Hotkeys** so your go-to commands are always one keystroke away.
+
+---
+
+### Step 2 — Build your own popouts (optional)
+
+Custom commands are where Synaptic Hatch shines. Tailor them to your workflow.
+
+#### Open settings
+1. Go to **Settings → Community plugins → Synaptic Hatch**.
+2. Toggle **Custom popout commands** on.
+3. Click **+ Add command**.
+
+#### Choose a command type
+
+| Type | When to use it | Example settings |
+| :--- | :--- | :--- |
+| **📄 File** | Always open the same note, e.g., project dashboard or inbox | File path: `Projects/Inbox.md` |
+| **📁 Folder** | Spin up new notes on the fly, e.g., meeting logs or daily scratch pads | Folder: `Meeting Notes`<br/>Filename rule: `{{date}}_meeting`<br/>Template: `Templates/meeting.md` (optional) |
+| **📅 Journal** | Launch daily/weekly/monthly/quarterly/yearly notes | Granularity: choose from what’s configured in Daily Notes / Calendar / Periodic Notes |
+| **📋 Blank** | Need a clean scratch popout for ad-hoc notes | No extra settings required |
+
+#### Activate the command
+1. Fill in the fields for your command type.
+2. Flip the **Enable** toggle on the right.
+3. The command now appears in the palette as **“Custom Popout: …”**
+
+---
+
+### Step 3 — Integrate with your tools
+
+#### Copy the URI
+1. Click the **🔗 Copy URI** button next to an enabled command.
+2. Save the `obsidian://custom-popout?vault=...` link.
+
+#### Examples
+
+**Raycast (macOS)**
 ```
-obsidian://aot-popup
+1. Open Raycast → search “Quicklinks”.
+2. Create a new Quicklink.
+3. Name: “Work Daily Note”.
+4. Link: paste the copied URI.
+5. Invoke the Quicklink to open the popout instantly.
 ```
 
-위 URI를 실행하면 `Open Always-On-Top Popout For Quick Note`와 동일하게 퀵 메모 창이 즉시 열립니다. 운영체제의 단축키 런처, Alfred, Raycast, AutoHotkey 등과 연결하면 Obsidian을 열지 않고도 바로 메모 창을 호출할 수 있습니다.
+**Alfred (macOS)**
+```
+1. Create a blank Workflow.
+2. Add a Hotkey trigger (e.g., Cmd+Shift+Space).
+3. Connect it to an “Open URL” action with the copied URI.
+4. Hit the hotkey to summon your note.
+```
 
-## 설정
-- **메인 창 핀 표시기**  
-  표시 여부와 상하/좌우 오프셋(px)을 지정하여 원하는 위치에 배치할 수 있습니다. 기본값은 고정 상태일 때만 표시합니다.
-- **팝아웃 창 핀 표시기**  
-  표시 여부와 위치를 개별적으로 조정할 수 있습니다. 팝아웃 창에서는 기본적으로 항상 표시됩니다(고정 시 강조 색상).
+**Stream Deck / system-wide shortcuts**
+- Map the URI to a button or hotkey for one-tap popouts.
 
-설정 변경 후에는 표시기가 자동으로 새 위치와 상태로 갱신됩니다.
+---
 
-## 설치 & 업데이트
-1. **커뮤니티 플러그인 설치**  
-   - Obsidian에서 **Settings → Community plugins**로 이동하여 안전 모드를 해제합니다.  
-   - **Browse**에서 `Synaptic Hatch`를 검색해 설치 후 활성화합니다.
-2. **수동 설치(개발 버전)**  
-   - 저장소를 내려받아 `npm install && npm run build`를 실행합니다.  
-   - 생성된 `main.js`, `manifest.json`, `styles.css` 파일을 `<Vault>/.obsidian/plugins/synaptic-hatch/`에 복사합니다.  
-   - Obsidian을 재시작하거나 플러그인을 다시 로드합니다.
+## ⚙️ Settings Overview
 
-## 호환성 및 주의 사항
-- 이 플러그인은 Electron 창 제어 API를 사용하므로 **데스크톱 버전에서만 동작**합니다. (manifest.json의 `isDesktopOnly: true`)
-- 운영체제별로 Always-on-Top 제어 권한이 제한된 환경에서는 창 제어가 실패할 수 있습니다.
-- 메인 창을 강제로 배경으로 보내는 기능은 OS에 따라 일시적으로 포커스를 되돌릴 수도 있습니다. 문제가 발생하면 퀵 메모 커맨드를 일반 팝아웃 커맨드로 대체해 사용하세요.
+### Indicators
+Two toggles control the indicator on the main window and popout windows separately. For each, you can tweak:
+- **Top offset** (px)
+- **Right offset** (px)
+- **Indicator size** (px)
+- **Icon size** (px)
 
-## 팁
-- 자주 쓰는 커맨드에는 **Settings → Hotkeys**에서 단축키를 지정하세요.
-- 퀵 메모 URI는 시스템 전역 단축키와 연동해 두면, 다른 앱을 사용하다가도 즉시 메모 창을 불러올 수 있습니다.
-- 팝아웃 창을 닫으면 자동으로 Always-on-Top 상태가 해제되고, 필요한 경우 메인 창 포커스를 복원합니다.
+> 💡 If the indicator overlaps other buttons, adjust the offsets until it sits comfortably.
+
+### Date format
+Controls how `{{date}}` is expanded when creating files from folder commands.  
+Default: `YYYY-MM-DD` → produces `2024-03-15`.  
+Examples:
+- `YYYY년 MM월 DD일` → `2024년 03월 15일`
+- `YYYYMMDD_HHmmss` → `20240315_143022`
+
+---
+
+## 💡 Workflow Ideas
+
+- **Dual monitors:** Park reference notes on a secondary display while drafting on the main screen.
+- **Meetings & classes:** Keep note-taking in front while video calls stay behind the popout.
+- **Writing & research:** Pop out multiple source notes and keep the editor clean.
+- **Morning routine:** Create a custom journal command, copy its URI, and trigger it with your startup automation.
+- **Project quick notes:** Assign shortcut keys to project-specific popouts for frictionless capture.
+
+---
+
+## 🔧 Troubleshooting
+
+| Symptom | Fix |
+| --- | --- |
+| Window doesn’t stay pinned | Another app may override Always-on-Top. Restart Obsidian or test with a simpler setup. |
+| Popout closes immediately | Requires Obsidian 0.15.0 or later. Update if needed. |
+| Custom command missing | Ensure the command is enabled, all required fields are valid, and filenames avoid forbidden characters `/ \ : * ? " < > |`. |
+| URI fails | Vault names containing spaces or non-Latin characters are auto-encoded. Don’t edit the URI manually. |
+| Indicator overlaps UI | Adjust the offset sliders in settings until it clears surrounding buttons. |
+
+---
+
+## 📚 FAQ
+
+### How do I enter file paths?
+Use vault-relative paths, e.g., `Projects/Work/Dashboard.md`. Folder fields support auto-complete when you start typing.
+
+### What does `{{date}}` do?
+In folder commands, `{{date}}` is replaced with the current date formatted per your settings.  
+Example: `{{date}}_meeting` → `2024-03-15_meeting.md`.
+
+### When can I use the journal type?
+Whenever Obsidian’s **Daily Notes** core plugin, the **Calendar** community plugin (weekly), **Periodic Notes**, or similar periodic-note providers are active. Only the granularities that are configured in those plugins will appear.
+
+---
+
+## 📦 Installation
+
+### (Pending approval) Community plugin store
+1. Open **Settings → Community plugins**.
+2. Disable Safe mode (first time only).
+3. Click **Browse**.
+4. Search for **“Synaptic Hatch.”**
+5. Install and enable the plugin.
+
+---
+
+## 🤝 Contributing
+
+Found a bug or have an idea?  
+- File an issue on GitHub.  
+- Suggestions and feedback are always welcome!
+
+---
+
+## 📄 License
+
+Distributed under the [MIT License](LICENSE).
+
+---
+
+## 👨‍💻 About the Developer
+
+- **Developer:** Yongmini  
+- **Contact:** https://x.com/Facilitate4U
+
+---
+
+May Synaptic Hatch become the perfect portal for your ideas. 🚀

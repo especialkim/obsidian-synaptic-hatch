@@ -5,6 +5,7 @@ import { registerCommands } from './src/commands';
 import { AlwaysOnTopSettingTab } from './src/setting/settings-tab';
 import { AlwaysOnTopSettings, loadPluginSettings, savePluginSettings } from './src/setting/settings';
 import { executeToggleWindowPin } from './src/commands/toggle-window-pin';
+import { registerTabMenuItems } from './src/menu/tab-menu';
 
 export default class AlwaysOnTopPlugin extends Plugin {
 	settings: AlwaysOnTopSettings;
@@ -24,6 +25,8 @@ export default class AlwaysOnTopPlugin extends Plugin {
 			indicators: this.indicators,
 			popouts: this.popouts,
 		});
+
+		registerTabMenuItems(this, this.popouts);
 
 		this.addSettingTab(new AlwaysOnTopSettingTab(this.app, this));
 

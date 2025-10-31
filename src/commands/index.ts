@@ -14,7 +14,7 @@ interface RegisterCommandOptions {
 
 export function registerCommands(plugin: AlwaysOnTopPlugin, options: RegisterCommandOptions) {
 	registerToggleWindowPinCommand(plugin, options.indicators);
-	// registerOpenAlwaysOnTopPopoutCommand(plugin, options.popouts);
+	registerOpenAlwaysOnTopPopoutCommand(plugin, options.popouts);
 	registerCustomPopoutCommands(plugin, options.popouts);
 }
 

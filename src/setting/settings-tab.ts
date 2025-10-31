@@ -16,6 +16,7 @@ import {
 } from '../utils/pathUtils';
 import { FileSuggest } from '../suggest/FileSuggest';
 import { FolderSuggest } from '../suggest/FolderSuggest';
+import { i18n } from '../utils/i18n';
 
 enum CustomCommandType {
 	BLANK = 'blank',
@@ -93,8 +94,8 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 		/* Section : Main Window Indicator  */
 		this.createCollapsibleSection({
 			container: containerEl,
-			name: 'Main Window Indicator',
-			desc: 'By default, the pin indicator appears only when the main window is pinned, and disappears when unpinned.',
+			name: i18n.t('setting.mainWindowIndicator'),
+			desc: i18n.t('setting.mainWindowIndicatorDesc'),
 			isEnabled: () => this.plugin.settings.showIndicatorInMainWindow,
 			onToggle: async (value) => {
 				this.plugin.settings.showIndicatorInMainWindow = value;
@@ -106,8 +107,8 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 		/* Section : Pop-out Window Indicator */
 		this.createCollapsibleSection({
 			container: containerEl,
-			name: 'Pop-out Window Indicator',
-			desc: 'By default, the pin indicator appears only when the main window is pinned, and disappears when unpinned.',
+			name: i18n.t('setting.popoutWindowIndicator'),
+			desc: i18n.t('setting.popoutWindowIndicatorDesc'),
 			isEnabled: () => this.plugin.settings.showIndicatorInPopoutWindows,
 			onToggle: async (value) => {
 				this.plugin.settings.showIndicatorInPopoutWindows = value;
@@ -119,8 +120,8 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 		/* Section : Custom Popout Commands */
 		const { contentEl: customCommandsContentEl } = this.createCollapsibleSection({
 			container: containerEl,
-			name: 'Custom Popout Commands',
-			desc: 'Create custom commands for opening pop-out windows with different configurations.',
+			name: i18n.t('setting.customPopoutCommands'),
+			desc: i18n.t('setting.customPopoutCommandsDesc'),
 			isEnabled: () => this.plugin.settings.useCustomPopoutCommands,
 			onToggle: async (value) => {
 				this.plugin.settings.useCustomPopoutCommands = value;
@@ -136,7 +137,7 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 					.setClass('synaptic-hatch-custom-command-add-button-container')
 					.addButton((btn) =>
 						btn
-							.setButtonText('+ Add Command')
+							.setButtonText(i18n.t('setting.addCommand'))
 							.setCta()
 							.onClick(async () => {
 								const newCommand: CustomPopoutCommand = {
@@ -160,13 +161,13 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 		const miscSectionContent = miscSection.createDiv({ cls: 'synaptic-hatch-section-content' });
 
 		new Setting(miscSectionHeader)
-			.setName('Miscellaneous')
-			.setDesc('Miscellaneous settings for the plugin.')
+			.setName(i18n.t('setting.miscellaneous'))
+			.setDesc(i18n.t('setting.miscellaneousDesc'))
 			.setHeading();
 
 		new Setting(miscSectionContent)
-			.setName('Date format')
-			.setDesc('Format for {{date}} substitution (e.g., YYYY-MM-DD)')
+			.setName(i18n.t('setting.dateFormat'))
+			.setDesc(i18n.t('setting.dateFormatDesc'))
 			.addText((text) => {
 				text.setValue(this.plugin.settings.dateFormat);
 				text.onChange(async (value) => {
@@ -191,12 +192,12 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 		new Setting(type)
 			.addDropdown((dropdown) => {
 				// type이 미정일 때만 선택 프롬프트 표시 (짧게)
-				dropdown.addOption('blank', 'Blank');
-				dropdown.addOption('file', 'File');
-				dropdown.addOption('folder', 'Folder');
+				dropdown.addOption('blank', i18n.t('setting.blank'));
+				dropdown.addOption('file', i18n.t('setting.file'));
+				dropdown.addOption('folder', i18n.t('setting.folder'));
 
 				if(isJournalAvailable()){
-					dropdown.addOption('journal', 'Journal');
+					dropdown.addOption('journal', i18n.t('setting.journal'));
 				}
 				dropdown.setValue(cmd.type || '');
 				dropdown.onChange(async (value) => {
@@ -216,21 +217,21 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 
 		new Setting(copy)
 			.addButton((btn) => {
-				btn.setTooltip('Copy URI');
+				btn.setTooltip(i18n.t('setting.copyURI'));
 				setIcon(btn.buttonEl, 'copy');
 				btn.setDisabled(!cmd.enabled);
 				btn.onClick(() => {
 					if (cmd.enabled) {
 						const uri = getCustomCommandURI(this.plugin, cmd);
 						navigator.clipboard.writeText(uri);
-						new Notice(`Custom Popout #${index + 1} URI copied to clipboard`);
+						new Notice(i18n.t('notice.uriCopied', { number: String(index + 1) }));
 					}
 				});
 			});
 
 		new Setting(remove)
 			.addButton((btn) => {
-				btn.setTooltip('Delete');
+				btn.setTooltip(i18n.t('setting.delete'));
 				setIcon(btn.buttonEl, 'trash-2');
 				btn.setWarning();
 				btn.onClick(async () => {
@@ -298,8 +299,8 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 		const windowLabel = type === 'main' ? 'main window' : 'pop-out windows';
 
 		this.createNumberSetting(container, {
-			name: 'Top offset (px)',
-			desc: `Distance from the top edge of the ${windowLabel}.`,
+			name: i18n.t('setting.topOffset'),
+			desc: i18n.t('setting.topOffsetDesc'),
 			getValue: () => this.plugin.settings[`${prefix}IndicatorOffsetTop`],
 			onChange: async (value) => {
 				this.plugin.settings[`${prefix}IndicatorOffsetTop`] = value;
@@ -308,8 +309,8 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 		});
 
 		this.createNumberSetting(container, {
-			name: 'Right offset (px)',
-			desc: `Distance from the right edge of the ${windowLabel}.`,
+			name: i18n.t('setting.rightOffset'),
+			desc: i18n.t('setting.rightOffsetDesc'),
 			getValue: () => this.plugin.settings[`${prefix}IndicatorOffsetRight`],
 			onChange: async (value) => {
 				this.plugin.settings[`${prefix}IndicatorOffsetRight`] = value;
@@ -318,8 +319,8 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 		});
 
 		this.createNumberSetting(container, {
-			name: 'Indicator size (px)',
-			desc: 'Width and height of the indicator box.',
+			name: i18n.t('setting.indicatorSize'),
+			desc: i18n.t('setting.indicatorSizeDesc'),
 			getValue: () => this.plugin.settings[`${prefix}IndicatorSize`],
 			onChange: async (value) => {
 				this.plugin.settings[`${prefix}IndicatorSize`] = value;
@@ -330,8 +331,8 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 		});
 
 		this.createNumberSetting(container, {
-			name: 'Icon size (px)',
-			desc: 'Size of the icon inside the indicator.',
+			name: i18n.t('setting.iconSize'),
+			desc: i18n.t('setting.iconSizeDesc'),
 			getValue: () => this.plugin.settings[`${prefix}IndicatorIconSize`],
 			onChange: async (value) => {
 				this.plugin.settings[`${prefix}IndicatorIconSize`] = value;
@@ -357,7 +358,7 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 
 		if(!isExist){
 			customCommandsSectionContent.createEl('p', {
-				text: 'No custom commands yet.',
+				text: i18n.t('setting.noCustomCommands'),
 				cls: 'setting-item-description',
 			});
 		}else{
@@ -423,7 +424,7 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 	}): void {
 		new Setting(context.options)
 			.addText((text) => {
-				text.setPlaceholder('Open a new blank Always-on-Top Popout Window');
+				text.setPlaceholder(i18n.t('setting.blankDescription'));
 				text.setDisabled(true);
 			})
 			.settingEl.addClass('is-disabled');
@@ -440,7 +441,7 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 	}): void {
 		new Setting(context.options)
 			.addText((text) => {
-				text.setPlaceholder('Enter a file path');
+				text.setPlaceholder(i18n.t('setting.enterFilePath'));
 				text.setValue(context.cmd.config.filePath || '');
 				text.onChange(async (value) => {
 					context.cmd.config.filePath = value;
@@ -462,7 +463,7 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 		// Folder path input
 		new Setting(context.options)
 			.addText((text) => {
-				text.setPlaceholder('Enter a folder path');
+				text.setPlaceholder(i18n.t('setting.enterFolderPath'));
 				text.setValue(context.cmd.config.folderPath || '');
 				text.onChange(async (value) => {
 					context.cmd.config.folderPath = value;
@@ -474,7 +475,7 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 		// File name rule input
 		new Setting(context.options)
 			.addText((text) => {
-				text.setPlaceholder('Filename rule ({{date}} optional');
+				text.setPlaceholder(i18n.t('setting.filenameRule'));
 				text.setValue(context.cmd.config.fileNameRule || '');
 				text.onChange(async (value) => {
 					context.cmd.config.fileNameRule = value;
@@ -485,9 +486,9 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 		// Template path input
 		new Setting(context.options)
 			.addText((text) => {
-				text.setPlaceholder('Enter a template file path');
+				text.setPlaceholder(i18n.t('setting.enterTemplatePath'));
 				text.setValue(context.cmd.config.templatePath || '');
-				text.inputEl.dataset.tooltip = 'Enter a template file path';
+				text.inputEl.dataset.tooltip = i18n.t('setting.enterTemplatePath');
 				text.onChange(async (value) => {
 					context.cmd.config.templatePath = value;
 					await this.handleConfigChange(context.cmd, context.enable, context.customCommandsSectionContent);
@@ -506,11 +507,20 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 		customCommandsSectionContent: HTMLElement;
 	}): void {
 		const availableGranularities = getAvailableGranularities();
+		
+		// 저널 그래뉼러리티를 번역된 레이블로 매핑
+		const granularityLabels: Record<string, string> = {
+			'daily': i18n.t('journal.daily'),
+			'weekly': i18n.t('journal.weekly'),
+			'monthly': i18n.t('journal.monthly'),
+			'quarterly': i18n.t('journal.quarterly'),
+			'yearly': i18n.t('journal.yearly'),
+		};
 
 		new Setting(context.options)
 			.addDropdown((dropdown) => {
 				availableGranularities.forEach((granularity) => {
-					dropdown.addOption(granularity, granularity);
+					dropdown.addOption(granularity, granularityLabels[granularity] || granularity);
 				});
 				
 				if (context.cmd.config.journalPeriod) {
@@ -588,19 +598,19 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 	
 		switch(type){
 			case 'blank':
-				customCommand.name = 'Custom Popout, Open a new blank Always-on-Top Popout Window';
+				customCommand.name = `Custom Popout, ${i18n.t('customCommand.blank')}`;
 				break;
 			case 'file':
 				const fileName = getFileNameOfPath(customCommand.config.filePath || '');
-				customCommand.name = `Custom Popout, Open <${fileName}> in an Always-on-Top Popout Window`;
+				customCommand.name = `Custom Popout, ${i18n.t('customCommand.file', { filename: fileName })}`;
 				break;
 			case 'folder':
 				const folder = getFolderNameOfPath(customCommand.config.folderPath || '');
-				customCommand.name = `Custom Popout, Create a new note in <${folder}> and open it in an Always-on-Top Popout Window`;
+				customCommand.name = `Custom Popout, ${i18n.t('customCommand.folder', { folder })}`;
 				break;
 			case 'journal':
 				const subType = customCommand.config.journalPeriod || 'daily';
-				customCommand.name = `Custom Popout, Open <${subType}> journal in an Always-on-Top Popout Window`;
+				customCommand.name = `Custom Popout, ${i18n.t('customCommand.journal', { period: subType })}`;
 				break;
 		}
 	}
@@ -615,11 +625,11 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 			const filePath = cmd.config.filePath;
 			
 			if (!filePath) {
-				return 'File path is required.';
+				return i18n.t('validation.filePathRequired');
 			}
 
 			if (!isFileExists(this.plugin, filePath)) {
-				return `File does not exist: ${filePath}`;
+				return i18n.t('validation.fileNotExists', { path: filePath });
 			}
 		}
 
@@ -630,24 +640,24 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 			
 			// 폴더 경로 검증
 			if (folderPath && !isFolderExists(this.plugin, folderPath)) {
-				return `Folder does not exist: ${folderPath}`;
+				return i18n.t('validation.folderNotExists', { path: folderPath });
 			}
 
 			// 파일명 규칙 검증
 			if (!fileNameRule) {
-				return 'File name rule is required.';
+				return i18n.t('validation.filenameRuleRequired');
 			}
 
 			// 날짜 치환 후 파일명 검증
 			const resolvedFileName = resolveFileNameRule(fileNameRule, this.plugin.settings.dateFormat);
 			
 			if (hasInvalidFileNameCharacters(resolvedFileName)) {
-				return `Invalid characters in file name: ${resolvedFileName}`;
+				return i18n.t('validation.invalidCharacters', { filename: resolvedFileName });
 			}
 
 			// 템플릿 경로 검증
 			if (templatePath && !isFileExists(this.plugin, templatePath)) {
-				return `Template file does not exist: ${templatePath}`;
+				return i18n.t('validation.templateNotExists', { path: templatePath });
 			}
 		}
 

@@ -2,18 +2,19 @@ import { Notice } from 'obsidian';
 import { toggleAlwaysOnTop, AlwaysOnTopResult } from '../electron';
 import type { IndicatorManager } from '../indicator-manager';
 import type AlwaysOnTopPlugin from '../../main';
+import { i18n } from '../utils/i18n';
 
 function showToggleNotice(result: AlwaysOnTopResult) {
 	switch (result) {
 		case 'applied':
-			new Notice('Window pinned on top');
+			new Notice(i18n.t('notice.windowPinned'));
 			break;
 		case 'removed':
-			new Notice('Window unpinned');
+			new Notice(i18n.t('notice.windowUnpinned'));
 			break;
 		case 'unavailable':
 		default:
-			new Notice('Unable to control the window');
+			new Notice(i18n.t('notice.windowControlUnavailable'));
 	}
 }
 
@@ -45,14 +46,13 @@ export function executeToggleWindowPin(plugin: AlwaysOnTopPlugin, indicators: In
 	// 인디케이터가 안 보이는 경우에만 notice 표시
 	if (shouldShowNotice(plugin, focusedDoc)) {
 		showToggleNotice(result);
-	} else {
 	}
 }
 
 export function registerToggleWindowPinCommand(plugin: AlwaysOnTopPlugin, indicators: IndicatorManager) {
 	plugin.addCommand({
 		id: 'toggle-window-pin',
-		name: 'Toggle Window Pin for Always on Top',
+		name: i18n.t('command.toggleWindowPin'),
 		callback: () => executeToggleWindowPin(plugin, indicators),
 	});
 }
