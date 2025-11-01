@@ -189,8 +189,9 @@ export class IndicatorManager {
 
 	private applyIndicatorPosition(indicator: HTMLElement, doc: Document): void {
 		const offsets = this.getIndicatorOffsets(doc);
-		indicator.style.top = `${offsets.top}px`;
-		indicator.style.right = `${offsets.right}px`;
+		// Set CSS variables instead of inline styles for better theme compatibility
+		indicator.style.setProperty('--indicator-offset-top', `${offsets.top}px`);
+		indicator.style.setProperty('--indicator-offset-right', `${offsets.right}px`);
 		this.applyIndicatorStyle(indicator, doc);
 	}
 
@@ -212,24 +213,13 @@ export class IndicatorManager {
 	private applyIndicatorStyle(indicator: HTMLElement, doc: Document): void {
 		const isMainWindow = doc === document;
 		
+		// Set CSS variables instead of inline styles for better theme compatibility
 		if (isMainWindow) {
-			indicator.style.width = `${this.plugin.settings.mainIndicatorSize}px`;
-			indicator.style.height = `${this.plugin.settings.mainIndicatorSize}px`;
-			
-			const svg = indicator.querySelector('svg');
-			if (svg) {
-				svg.style.width = `${this.plugin.settings.mainIndicatorIconSize}px`;
-				svg.style.height = `${this.plugin.settings.mainIndicatorIconSize}px`;
-			}
+			indicator.style.setProperty('--indicator-size', `${this.plugin.settings.mainIndicatorSize}px`);
+			indicator.style.setProperty('--indicator-icon-size', `${this.plugin.settings.mainIndicatorIconSize}px`);
 		} else {
-			indicator.style.width = `${this.plugin.settings.popoutIndicatorSize}px`;
-			indicator.style.height = `${this.plugin.settings.popoutIndicatorSize}px`;
-			
-			const svg = indicator.querySelector('svg');
-			if (svg) {
-				svg.style.width = `${this.plugin.settings.popoutIndicatorIconSize}px`;
-				svg.style.height = `${this.plugin.settings.popoutIndicatorIconSize}px`;
-			}
+			indicator.style.setProperty('--indicator-size', `${this.plugin.settings.popoutIndicatorSize}px`);
+			indicator.style.setProperty('--indicator-icon-size', `${this.plugin.settings.popoutIndicatorIconSize}px`);
 		}
 	}
 }

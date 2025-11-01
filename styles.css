@@ -1,11 +1,13 @@
 /* Always On Top Pin Indicator */
 .always-on-top-indicator {
 	position: fixed;
-	top: 60px;
-	right: 12px;
+	/* Position values are set via CSS variables for dynamic configuration */
+	top: var(--indicator-offset-top, 80px);
+	right: var(--indicator-offset-right, 12px);
 	z-index: 9999;
-	width: 30px;
-	height: 30px;
+	/* Size values are set via CSS variables for dynamic configuration */
+	width: var(--indicator-size, 30px);
+	height: var(--indicator-size, 30px);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -34,8 +36,9 @@
 }
 
 .always-on-top-indicator svg {
-	width: 15px;
-	height: 15px;
+	/* Icon size is set via CSS variable for dynamic configuration */
+	width: var(--indicator-icon-size, 15px);
+	height: var(--indicator-icon-size, 15px);
 }
 
 .always-on-top-indicator--main {

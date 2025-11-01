@@ -40,11 +40,13 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
 		'setting.indicatorSizeDesc': '표시기 박스의 너비와 높이입니다.',
 		'setting.iconSize': '아이콘 크기 (px)',
 		'setting.iconSizeDesc': '표시기 내부 아이콘의 크기입니다.',
+		'setting.default': '기본값',
+		'setting.resetToDefault': '기본값으로 초기화: {{value}}',
 
 		// 커스텀 명령어
 		'setting.addCommand': '+ 명령어 추가',
 		'setting.noCustomCommands': '아직 커스텀 명령어가 없습니다.',
-		'setting.blank': '비어있음',
+		'setting.blank': '빈 탭',
 		'setting.file': '파일',
 		'setting.folder': '폴더',
 		'setting.journal': '저널',
@@ -126,6 +128,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
 		'setting.indicatorSizeDesc': 'Width and height of the indicator box.',
 		'setting.iconSize': 'Icon size (px)',
 		'setting.iconSizeDesc': 'Size of the icon inside the indicator.',
+		'setting.default': 'Default',
+		'setting.resetToDefault': 'Reset to default: {{value}}',
 
 		// Custom commands
 		'setting.addCommand': '+ Add command',

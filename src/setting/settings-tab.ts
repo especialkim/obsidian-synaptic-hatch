@@ -1,6 +1,7 @@
 import { PluginSettingTab, Setting, setIcon } from 'obsidian';
 import type AlwaysOnTopPlugin from '../../main';
 import type { CustomPopoutCommand, PopoutCommandType, JournalPeriod } from './settings';
+import { DEFAULT_SETTINGS } from './settings';
 import { Notice } from 'obsidian';
 import type { App } from 'obsidian';
 import { registerCustomCommand, removeCustomCommand } from '../commands';
@@ -245,7 +246,7 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 	}
 
 	/**
-	 * Creates a number input setting with validation.
+	 * Creates a number input setting with validation and reset button.
 	 * Reusable component for numeric configuration fields.
 	 */
 	private createNumberSetting(
@@ -257,6 +258,7 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 			onChange: (value: number) => Promise<void>;
 			min?: number;
 			max?: number;
+			defaultValue?: number;
 		}
 	) {
 		const min = options.min ?? 0;
@@ -270,13 +272,45 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 				text.inputEl.step = '1';
 				text.inputEl.addClass('always-on-top-setting-input');
 				text.setValue(String(options.getValue()));
-				text.onChange(async (raw) => {
+				
+				// Track if change is from arrow keys for immediate update
+				let isArrowKeyChange = false;
+
+				// Detect arrow key press
+				text.inputEl.addEventListener('keydown', (e) => {
+					if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+						isArrowKeyChange = true;
+					} else if (e.key === 'Enter') {
+						text.inputEl.blur();
+					}
+				});
+
+				// Handle input changes (includes arrow keys and typing)
+				text.inputEl.addEventListener('input', async () => {
+					if (isArrowKeyChange) {
+						// Arrow key change: apply immediately
+						const raw = text.getValue();
+						const parsed = Number(raw);
+						if (Number.isFinite(parsed)) {
+							const sanitizedValue = Math.max(min, Math.min(max, Math.round(parsed)));
+							await options.onChange(sanitizedValue);
+						}
+						isArrowKeyChange = false;
+					}
+					// Regular typing: defer to blur event for validation
+				});
+
+				// Validate and save on blur (for typing inputs)
+				text.inputEl.addEventListener('blur', async () => {
+					const raw = text.getValue();
 					if (raw.trim() === '') {
+						text.setValue(String(options.getValue()));
 						return;
 					}
 
 					const parsed = Number(raw);
 					if (!Number.isFinite(parsed)) {
+						text.setValue(String(options.getValue()));
 						return;
 					}
 
@@ -284,6 +318,20 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 					await options.onChange(sanitizedValue);
 					text.setValue(String(options.getValue()));
 				});
+			})
+			.addExtraButton((btn) => {
+				if (options.defaultValue !== undefined) {
+					btn.setIcon('reset');
+					btn.setTooltip(i18n.t('setting.resetToDefault', { value: String(options.defaultValue) }));
+					btn.onClick(async () => {
+						await options.onChange(options.defaultValue!);
+						// Re-render the setting by finding and updating the input
+						const input = btn.extraSettingsEl.parentElement?.querySelector('input[type="number"]') as HTMLInputElement;
+						if (input) {
+							input.value = String(options.defaultValue);
+						}
+					});
+				}
 			});
 	}
 
@@ -296,31 +344,38 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 		type: 'main' | 'popout'
 	): void {
 		const prefix = type === 'main' ? 'main' : 'popout';
-		const windowLabel = type === 'main' ? 'main window' : 'pop-out windows';
+		
+		// Get default values from DEFAULT_SETTINGS
+		const defaultOffsetTop = DEFAULT_SETTINGS[`${prefix}IndicatorOffsetTop`];
+		const defaultOffsetRight = DEFAULT_SETTINGS[`${prefix}IndicatorOffsetRight`];
+		const defaultSize = DEFAULT_SETTINGS[`${prefix}IndicatorSize`];
+		const defaultIconSize = DEFAULT_SETTINGS[`${prefix}IndicatorIconSize`];
 
 		this.createNumberSetting(container, {
 			name: i18n.t('setting.topOffset'),
-			desc: i18n.t('setting.topOffsetDesc'),
+			desc: i18n.t('setting.topOffsetDesc') + ` (${i18n.t('setting.default')}: ${defaultOffsetTop})`,
 			getValue: () => this.plugin.settings[`${prefix}IndicatorOffsetTop`],
 			onChange: async (value) => {
 				this.plugin.settings[`${prefix}IndicatorOffsetTop`] = value;
 				await this.plugin.persistSettings();
 			},
+			defaultValue: defaultOffsetTop,
 		});
 
 		this.createNumberSetting(container, {
 			name: i18n.t('setting.rightOffset'),
-			desc: i18n.t('setting.rightOffsetDesc'),
+			desc: i18n.t('setting.rightOffsetDesc') + ` (${i18n.t('setting.default')}: ${defaultOffsetRight})`,
 			getValue: () => this.plugin.settings[`${prefix}IndicatorOffsetRight`],
 			onChange: async (value) => {
 				this.plugin.settings[`${prefix}IndicatorOffsetRight`] = value;
 				await this.plugin.persistSettings();
 			},
+			defaultValue: defaultOffsetRight,
 		});
 
 		this.createNumberSetting(container, {
 			name: i18n.t('setting.indicatorSize'),
-			desc: i18n.t('setting.indicatorSizeDesc'),
+			desc: i18n.t('setting.indicatorSizeDesc') + ` (${i18n.t('setting.default')}: ${defaultSize})`,
 			getValue: () => this.plugin.settings[`${prefix}IndicatorSize`],
 			onChange: async (value) => {
 				this.plugin.settings[`${prefix}IndicatorSize`] = value;
@@ -328,11 +383,12 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 			},
 			min: 20,
 			max: 60,
+			defaultValue: defaultSize,
 		});
 
 		this.createNumberSetting(container, {
 			name: i18n.t('setting.iconSize'),
-			desc: i18n.t('setting.iconSizeDesc'),
+			desc: i18n.t('setting.iconSizeDesc') + ` (${i18n.t('setting.default')}: ${defaultIconSize})`,
 			getValue: () => this.plugin.settings[`${prefix}IndicatorIconSize`],
 			onChange: async (value) => {
 				this.plugin.settings[`${prefix}IndicatorIconSize`] = value;
@@ -340,6 +396,7 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 			},
 			min: 10,
 			max: 50,
+			defaultValue: defaultIconSize,
 		});
 	}
 
