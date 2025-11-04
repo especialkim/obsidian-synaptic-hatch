@@ -20,7 +20,7 @@ export function registerTabMenuItems(plugin: AlwaysOnTopPlugin, popouts: PopoutM
 				item.setIcon('pin');
 				item.setSection('open');
 				item.onClick(() => {
-					popouts.openPopout(false);
+					void popouts.openPopout(false);
 				});
 			});
 			
@@ -29,7 +29,7 @@ export function registerTabMenuItems(plugin: AlwaysOnTopPlugin, popouts: PopoutM
 				item.setIcon('pin-off');
 				item.setSection('open');
 				item.onClick(() => {
-					popouts.openPopout(true);
+					void popouts.openPopout(true);
 				});
 			});
 		}),

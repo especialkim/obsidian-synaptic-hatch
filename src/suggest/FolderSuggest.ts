@@ -1,8 +1,9 @@
+import AlwaysOnTopPlugin from "main";
 import { AbstractInputSuggest, TAbstractFile, TFolder, App } from "obsidian";
 
 export class FolderSuggest extends AbstractInputSuggest<TFolder> {
-    private plugin: any;
-    constructor(app: App, inputEl: HTMLInputElement, plugin: any) {
+    private plugin: AlwaysOnTopPlugin;
+    constructor(app: App, inputEl: HTMLInputElement, plugin: AlwaysOnTopPlugin) {
         super(app, inputEl);
         this.plugin = plugin;
     }

@@ -1,8 +1,9 @@
+import AlwaysOnTopPlugin from "main";
 import { AbstractInputSuggest, TFile, App } from "obsidian";
 
 export class FileSuggest extends AbstractInputSuggest<TFile> {
-    private plugin: any;
-    constructor(app: App, inputEl: HTMLInputElement, plugin: any) {
+    private plugin: AlwaysOnTopPlugin;
+    constructor(app: App, inputEl: HTMLInputElement, plugin: AlwaysOnTopPlugin) {
         super(app, inputEl);
         this.plugin = plugin;
     }

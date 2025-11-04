@@ -8,7 +8,7 @@ export function registerOpenAlwaysOnTopPopoutCommand(plugin: AlwaysOnTopPlugin, 
 		id: 'open-always-on-top-popout',
 		name: i18n.t('command.openAlwaysOnTopPopout'),
 		callback: () => {
-			popouts.openPopout(false);
+			void popouts.openPopout(false);
 		},
 	});
 
@@ -17,7 +17,7 @@ export function registerOpenAlwaysOnTopPopoutCommand(plugin: AlwaysOnTopPlugin, 
 		id: 'open-always-on-top-popout-background',
 		name: i18n.t('command.openAlwaysOnTopPopoutExclusive'),
 		callback: () => {
-			popouts.openPopout(true);
+			void popouts.openPopout(true);
 		},
 	});
 }
