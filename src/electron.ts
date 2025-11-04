@@ -66,7 +66,7 @@ export function getCurrentBrowserWindow(): ElectronBrowserWindow | null {
 					return win;
 				}
 			}
-		} catch (error) {
+		} catch {
 			// Continue to next strategy
 		}
 	}
@@ -78,7 +78,7 @@ export function getCurrentBrowserWindow(): ElectronBrowserWindow | null {
 			if (focusedWindow) {
 				return focusedWindow;
 			}
-		} catch (error) {
+		} catch {
 			// Continue to next strategy
 		}
 	}
@@ -90,7 +90,7 @@ export function getCurrentBrowserWindow(): ElectronBrowserWindow | null {
 			if (currentWindow) {
 				return currentWindow;
 			}
-		} catch (error) {
+		} catch {
 			// No window available
 		}
 	}
@@ -121,7 +121,7 @@ function getElectronRemoteModule(): ElectronRemoteModule | null {
 			if (resolved) {
 				return resolved;
 			}
-		} catch (error) {
+		} catch {
 			// Continue to next module
 		}
 	}
@@ -137,7 +137,7 @@ export function getAllBrowserWindows(): ElectronBrowserWindow[] {
 
 	try {
 		return remoteModule.BrowserWindow.getAllWindows();
-	} catch (error) {
+	} catch {
 		return [];
 	}
 }
@@ -154,7 +154,7 @@ export function getBrowserWindowById(id: number): ElectronBrowserWindow | null {
 
 	try {
 		return remoteModule.BrowserWindow.fromId(id) ?? null;
-	} catch (error) {
+	} catch {
 		return null;
 	}
 }
@@ -168,7 +168,7 @@ export function setWindowAlwaysOnTopById(id: number, flag: boolean, level: strin
 	try {
 		win.setAlwaysOnTop(flag, level);
 		return true;
-	} catch (error) {
+	} catch {
 		return false;
 	}
 }
@@ -182,7 +182,7 @@ export function focusWindowById(id: number): boolean {
 	try {
 		win.focus();
 		return true;
-	} catch (error) {
+	} catch {
 		return false;
 	}
 }
@@ -200,7 +200,7 @@ export function blurCurrentWindow(): boolean {
 	try {
 		win.blur();
 		return true;
-	} catch (error) {
+	} catch {
 		return false;
 	}
 }
@@ -218,7 +218,7 @@ export function blurWindowById(id: number): boolean {
 	try {
 		win.blur();
 		return true;
-	} catch (error) {
+	} catch {
 		return false;
 	}
 }

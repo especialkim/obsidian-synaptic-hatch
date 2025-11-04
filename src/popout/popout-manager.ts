@@ -88,7 +88,6 @@ export class PopoutManager {
 
 		if (shouldMaintainBackground) {
 			blurCurrentWindow();
-		} else {
 		}
 
 		if(!cmd){
@@ -135,63 +134,63 @@ export class PopoutManager {
 				console.error('Always On Top plugin: error creating journal note:', error);
 				new Notice(`Error creating ${granularity} journal note.`);
 			}
-			return;
-		}
-
-	if(cmd.type === 'folder'){
-		const folderPath = cmd.config.folderPath || '';
-		const fileNameRule = cmd.config.fileNameRule || '';
-		const templatePath = cmd.config.templatePath || '';
-		const date = moment().format(this.plugin.settings.dateFormat);
-		const hasDateFormat = fileNameRule.includes('{{Date}}') || fileNameRule.includes('{{date}}');
-		let fileName = hasDateFormat ? fileNameRule.replace('{{Date}}', date).replace('{{date}}', date) : fileNameRule;
-
-		// 확장자 처리: 확장자가 없으면 .md 추가
-		if (!fileName.includes('.')) {
-			fileName = `${fileName}.md`;
-		}
-
-		try {
-			// 폴더가 존재하는지 확인하고 없으면 생성
-			if (folderPath) {
-				await this.ensureFolderExists(folderPath);
-			}
-
-			// 파일 경로 생성 (folderPath가 빈 문자열이면 최상위 폴더)
-			const fullPath = folderPath ? `${folderPath}/${fileName}` : fileName;
-			
-			// 파일 존재 여부 확인
-			let fileToOpen: TFile | null = null;
-			const existingFile = this.plugin.app.vault.getAbstractFileByPath(fullPath);
-			
-			if (existingFile instanceof TFile) {
-				// 파일이 이미 존재
-				if (hasDateFormat) {
-					// 날짜 포맷이 있으면 기존 파일 열기
-					fileToOpen = existingFile;
-				} else {
-					// 날짜 포맷이 없으면 새 파일명 생성 (숫자 추가)
-					fileToOpen = await this.createUniqueFile(folderPath, fileName, templatePath);
-				}
-			} else {
-				// 파일이 없으면 새로 생성
-				fileToOpen = await this.createNewFile(fullPath, templatePath);
-			}
-
-			if (fileToOpen) {
-				const popoutLeaf = this.plugin.app.workspace.openPopoutLeaf();
-				popoutLeaf.openFile(fileToOpen).catch((error) => {
-					console.error('Always On Top plugin: failed to open file in pop-out window.', error);
-				});
-			} else {
-				new Notice('Failed to create or open file.');
-			}
-		} catch (error) {
-			console.error('Always On Top plugin: error in folder command:', error);
-			new Notice('Error creating or opening file.');
-		}
 		return;
 	}
+
+		if(cmd.type === 'folder'){
+			const folderPath = cmd.config.folderPath || '';
+			const fileNameRule = cmd.config.fileNameRule || '';
+			const templatePath = cmd.config.templatePath || '';
+			const date = moment().format(this.plugin.settings.dateFormat);
+			const hasDateFormat = fileNameRule.includes('{{Date}}') || fileNameRule.includes('{{date}}');
+			let fileName = hasDateFormat ? fileNameRule.replace('{{Date}}', date).replace('{{date}}', date) : fileNameRule;
+
+			// 확장자 처리: 확장자가 없으면 .md 추가
+			if (!fileName.includes('.')) {
+				fileName = `${fileName}.md`;
+			}
+
+			try {
+				// 폴더가 존재하는지 확인하고 없으면 생성
+				if (folderPath) {
+					await this.ensureFolderExists(folderPath);
+				}
+
+				// 파일 경로 생성 (folderPath가 빈 문자열이면 최상위 폴더)
+				const fullPath = folderPath ? `${folderPath}/${fileName}` : fileName;
+				
+				// 파일 존재 여부 확인
+				let fileToOpen: TFile | null = null;
+				const existingFile = this.plugin.app.vault.getAbstractFileByPath(fullPath);
+				
+				if (existingFile instanceof TFile) {
+					// 파일이 이미 존재
+					if (hasDateFormat) {
+						// 날짜 포맷이 있으면 기존 파일 열기
+						fileToOpen = existingFile;
+					} else {
+						// 날짜 포맷이 없으면 새 파일명 생성 (숫자 추가)
+						fileToOpen = await this.createUniqueFile(folderPath, fileName, templatePath);
+					}
+				} else {
+					// 파일이 없으면 새로 생성
+					fileToOpen = await this.createNewFile(fullPath, templatePath);
+				}
+
+				if (fileToOpen) {
+					const popoutLeaf = this.plugin.app.workspace.openPopoutLeaf();
+					popoutLeaf.openFile(fileToOpen).catch((error) => {
+						console.error('Always On Top plugin: failed to open file in pop-out window.', error);
+					});
+				} else {
+					new Notice('Failed to create or open file.');
+				}
+			} catch (error) {
+				console.error('Always On Top plugin: error in folder command:', error);
+				new Notice('Error creating or opening file.');
+			}
+			return;
+		}
 		
 	}
 
@@ -206,7 +205,7 @@ export class PopoutManager {
 
 	handleWindowClosed(doc: Document): void {
 		let closingPopupInfo: ActivePopupInfo | null = null;
-		for (const [windowId, info] of this.state.activePopups.entries()) {
+		for (const info of this.state.activePopups.values()) {
 			if (info.doc === doc) {
 				closingPopupInfo = info;
 				break;

@@ -243,31 +243,36 @@ export async function createJournalNote(granularity: JournalPeriod): Promise<TFi
     
     // Granularity별로 존재 여부 확인 및 생성 함수 선택
     switch (granularity) {
-        case 'daily':
+        case 'daily': {
             const allDailyNotes = getAllDailyNotes();
             existingFile = getDailyNote(today, allDailyNotes);
             createFunc = createDailyNote;
             break;
-        case 'weekly':
+        }
+        case 'weekly': {
             const allWeeklyNotes = getAllWeeklyNotes();
             existingFile = getWeeklyNote(today, allWeeklyNotes);
             createFunc = createWeeklyNote;
             break;
-        case 'monthly':
+        }
+        case 'monthly': {
             const allMonthlyNotes = getAllMonthlyNotes();
             existingFile = getMonthlyNote(today, allMonthlyNotes);
             createFunc = createMonthlyNote;
             break;
-        case 'quarterly':
+        }
+        case 'quarterly': {
             const allQuarterlyNotes = getAllQuarterlyNotes();
             existingFile = getQuarterlyNote(today, allQuarterlyNotes);
             createFunc = createQuarterlyNote;
             break;
-        case 'yearly':
+        }
+        case 'yearly': {
             const allYearlyNotes = getAllYearlyNotes();
             existingFile = getYearlyNote(today, allYearlyNotes);
             createFunc = createYearlyNote;
             break;
+        }
         default:
             return null;
     }
@@ -286,7 +291,7 @@ export async function createJournalNote(granularity: JournalPeriod): Promise<TFi
         
         return null;
     
-    } catch (error) {
+    } catch {
         return null;
     }
 }

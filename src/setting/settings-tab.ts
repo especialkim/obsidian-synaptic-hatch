@@ -19,13 +19,6 @@ import { FileSuggest } from '../suggest/FileSuggest';
 import { FolderSuggest } from '../suggest/FolderSuggest';
 import { i18n } from '../utils/i18n';
 
-enum CustomCommandType {
-	BLANK = 'blank',
-	FILE = 'file',
-	FOLDER = 'folder',
-	JOURNAL = 'journal',
-}
-
 export class AlwaysOnTopSettingTab extends PluginSettingTab {
 
 	plugin: AlwaysOnTopPlugin;
@@ -119,7 +112,7 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 		});
 
 		/* Section : Custom Popout Commands */
-		const { contentEl: customCommandsContentEl } = this.createCollapsibleSection({
+		this.createCollapsibleSection({
 			container: containerEl,
 			name: i18n.t('setting.customPopoutCommands'),
 			desc: i18n.t('setting.customPopoutCommandsDesc'),
@@ -224,7 +217,7 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 				btn.onClick(() => {
 					if (cmd.enabled) {
 						const uri = getCustomCommandURI(this.plugin, cmd);
-						navigator.clipboard.writeText(uri);
+						void navigator.clipboard.writeText(uri);
 						new Notice(i18n.t('notice.uriCopied', { number: String(index + 1) }));
 					}
 				});
@@ -286,14 +279,14 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 				});
 
 				// Handle input changes (includes arrow keys and typing)
-				text.inputEl.addEventListener('input', async () => {
+				text.inputEl.addEventListener('input', () => {
 					if (isArrowKeyChange) {
 						// Arrow key change: apply immediately
 						const raw = text.getValue();
 						const parsed = Number(raw);
 						if (Number.isFinite(parsed)) {
 							const sanitizedValue = Math.max(min, Math.min(max, Math.round(parsed)));
-							await options.onChange(sanitizedValue);
+							void options.onChange(sanitizedValue);
 						}
 						isArrowKeyChange = false;
 					}
@@ -301,7 +294,7 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 				});
 
 				// Validate and save on blur (for typing inputs)
-				text.inputEl.addEventListener('blur', async () => {
+				text.inputEl.addEventListener('blur', () => {
 					const raw = text.getValue();
 					if (raw.trim() === '') {
 						text.setValue(String(options.getValue()));
@@ -315,7 +308,7 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 					}
 
 					const sanitizedValue = Math.max(min, Math.min(max, Math.round(parsed)));
-					await options.onChange(sanitizedValue);
+					void options.onChange(sanitizedValue);
 					text.setValue(String(options.getValue()));
 				});
 			})
@@ -455,16 +448,16 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 		const context = { options, cmd, enable, customCommandsSectionContent };
 
 		switch (type) {
-			case CustomCommandType.BLANK:
+			case 'blank':
 				this.renderBlankTypeOptions(context);
 				break;
-			case CustomCommandType.FILE:
+			case 'file':
 				this.renderFileTypeOptions(context);
 				break;
-			case CustomCommandType.FOLDER:
+			case 'folder':
 				this.renderFolderTypeOptions(context);
 				break;
-			case CustomCommandType.JOURNAL:
+			case 'journal':
 				this.renderJournalTypeOptions(context);
 				break;
 		}
@@ -620,14 +613,14 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 						}
 						// Validation successful: enable
 						cmd.enabled = true;
-						await this.setNameOfCustomPopoutCommand(cmd);
+						this.setNameOfCustomPopoutCommand(cmd);
 						await this.plugin.persistSettings();
 						registerCustomCommand(this.plugin, cmd, this.plugin.popouts);
 						this.renderCustomCommandsSectionContent(customCommandsSectionContent);
 					} else {
 						// Disable
 						cmd.enabled = false;
-						await this.setNameOfCustomPopoutCommand(cmd);
+						this.setNameOfCustomPopoutCommand(cmd);
 						await this.plugin.persistSettings();
 						removeCustomCommand(this.plugin, cmd);
 						this.renderCustomCommandsSectionContent(customCommandsSectionContent);
@@ -650,25 +643,28 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 		this.createCommandToggle(enable, cmd, customCommandsSectionContent);
 	}
 
-	private async setNameOfCustomPopoutCommand(customCommand: CustomPopoutCommand){
+	private setNameOfCustomPopoutCommand(customCommand: CustomPopoutCommand): void {
 		const type = customCommand.type;
 	
 		switch(type){
 			case 'blank':
 				customCommand.name = `Custom Popout, ${i18n.t('customCommand.blank')}`;
 				break;
-			case 'file':
+			case 'file': {
 				const fileName = getFileNameOfPath(customCommand.config.filePath || '');
 				customCommand.name = `Custom Popout, ${i18n.t('customCommand.file', { filename: fileName })}`;
 				break;
-			case 'folder':
+			}
+			case 'folder': {
 				const folder = getFolderNameOfPath(customCommand.config.folderPath || '');
 				customCommand.name = `Custom Popout, ${i18n.t('customCommand.folder', { folder })}`;
 				break;
-			case 'journal':
+			}
+			case 'journal': {
 				const subType = customCommand.config.journalPeriod || 'daily';
 				customCommand.name = `Custom Popout, ${i18n.t('customCommand.journal', { period: subType })}`;
 				break;
+			}
 		}
 	}
 
@@ -678,7 +674,7 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 	 */
 	private validateCustomCommandOptions(cmd: CustomPopoutCommand): string | null {
 
-		if(cmd.type === CustomCommandType.FILE){
+		if(cmd.type === 'file'){
 			const filePath = cmd.config.filePath;
 			
 			if (!filePath) {
@@ -690,7 +686,7 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 			}
 		}
 
-		if(cmd.type === CustomCommandType.FOLDER){
+		if(cmd.type === 'folder'){
 			const folderPath = cmd.config.folderPath || '';
 			const fileNameRule = cmd.config.fileNameRule;
 			const templatePath = cmd.config.templatePath || '';
@@ -718,7 +714,7 @@ export class AlwaysOnTopSettingTab extends PluginSettingTab {
 			}
 		}
 
-		if(cmd.type === CustomCommandType.JOURNAL){
+		if(cmd.type === 'journal'){
 			// Journal은 플러그인 설정에 의존하므로 별도 검증 불필요
 			// isJournalAvailable()로 이미 체크됨
 		}

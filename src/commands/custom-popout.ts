@@ -13,7 +13,7 @@ export function registerCustomPopoutCommands(plugin: AlwaysOnTopPlugin, popouts:
         registerCustomPopoutCommand(plugin, popouts, customCommand);
     });
 
-    plugin.registerObsidianProtocolHandler('custom-popout', async (params) => {
+    plugin.registerObsidianProtocolHandler('custom-popout', (params) => {
         const { vault, id } = params;
 
         if(vault !== plugin.app.vault.getName() || !id){
@@ -23,7 +23,7 @@ export function registerCustomPopoutCommands(plugin: AlwaysOnTopPlugin, popouts:
         const customCommand = plugin.settings.customPopoutCommands.find(cmd => cmd.id === id);
         
         if(customCommand){
-            plugin.popouts.openPopout(true, customCommand);
+            void plugin.popouts.openPopout(true, customCommand);
         }
     })
 }
@@ -37,7 +37,7 @@ export function registerCustomPopoutCommand(plugin: AlwaysOnTopPlugin, popouts: 
         id: customCommand.id,
         name: customCommand.name,
         callback: () => {
-            popouts.openPopout(true, customCommand);
+            void popouts.openPopout(true, customCommand);
         }
     })
 }
