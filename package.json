@@ -1,6 +1,6 @@
 {
 	"name": "synaptic-hatch",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "Always-on-Top pin, your quick memo portal beyond the app.",
 	"main": "main.js",
 	"scripts": {
